@@ -55,10 +55,8 @@ export const DashboardSidebar = () => {
         { href: "/dashboard/admin/stats", label: "Statistik Pajak", icon: BarChart3 },
         { href: "/dashboard/admin/audit", label: "Audit Log Sistem", icon: ShieldCheck },
         { href: "/dashboard/admin/announcements", label: "Pengumuman", icon: Megaphone },
-        { href: "/dashboard/admin/notifications", label: "System Broadcast", icon: Bell },
         { href: "/dashboard/admin/research", label: "Permohonan Riset", icon: GraduationCap },
         { href: "/dashboard/admin/cms/news", label: "CMS: Berita", icon: FileText },
-        { href: "/dashboard/admin/cms/articles", label: "CMS: Artikel", icon: BookOpen },
         { href: "/dashboard/ppid", label: "Permohonan PPID", icon: FileQuestion },
         { href: "/dashboard/pengaduan", label: "Pengaduan", icon: Megaphone },
       ];
@@ -114,7 +112,7 @@ export const DashboardSidebar = () => {
       )}>
         <div className="h-full flex flex-col p-8">
           {/* Logo Section */}
-          <div className="flex items-center gap-4 mb-14 px-2">
+          <div className="flex items-center gap-4 mb-8 px-2">
             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl border border-zinc-100 group-hover:rotate-6 transition-transform">
                <Image src="/logo.png" alt="Logo" width={40} height={40} className="object-contain" />
             </div>
@@ -122,6 +120,24 @@ export const DashboardSidebar = () => {
               <h2 className="text-xl font-black tracking-tighter text-foreground italic uppercase">Bapenda.<span className="text-primary italic">Hub</span></h2>
               <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest italic opacity-60 leading-none">Medan Digital Gov</p>
             </div>
+          </div>
+
+          {/* Global Search Bar */}
+          <div className="mb-6 relative group px-2">
+             <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-300 group-focus-within:text-primary transition-colors" />
+             <input 
+               type="text" 
+               placeholder="Cari global..." 
+               className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 transition-all text-xs font-bold italic"
+               onKeyDown={(e) => {
+                 if (e.key === "Enter") {
+                   const val = e.currentTarget.value.trim();
+                   if (val) {
+                     window.location.href = `/dashboard/admin/search?q=${encodeURIComponent(val)}`;
+                   }
+                 }
+               }}
+             />
           </div>
 
           <nav className="flex-1 space-y-1.5 overflow-y-auto no-scrollbar pr-2">
@@ -147,7 +163,7 @@ export const DashboardSidebar = () => {
           </nav>
 
           <div className="mt-8 pt-8 border-t border-zinc-50 space-y-2">
-            <Link href="/dashboard/settings" className="flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-bold text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all uppercase tracking-tight italic"><Settings className="w-5 h-5" /> Settings</Link>
+            <Link href={role === "ADMIN" ? "/dashboard/admin/settings" : "/dashboard/settings"} className="flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-bold text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all uppercase tracking-tight italic"><Settings className="w-5 h-5" /> Settings</Link>
             <button onClick={() => signOut({ callbackUrl: "/" })} className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all uppercase tracking-tight italic"><LogOut className="w-5 h-5" /> Logout</button>
           </div>
         </div>
@@ -181,14 +197,7 @@ export const DashboardTopbar = () => {
   
   return (
     <header className="h-24 bg-white border-b border-zinc-100 flex items-center justify-between px-8 lg:px-12 sticky top-0 z-30 shadow-sm shadow-zinc-100/10 text-left">
-       <div className="relative group w-full max-md hidden md:block max-w-sm">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-300 group-focus-within:text-primary transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Cari transaksi, layanan, berita..." 
-            className="w-full pl-14 pr-6 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 transition-all text-xs font-bold italic"
-          />
-       </div>
+       <div className="flex-1" />
 
        <div className="flex items-center gap-4 ml-auto">
           <Link href="/dashboard/notifications" className="relative p-3 bg-zinc-50 rounded-2xl border border-zinc-100 text-zinc-400 hover:text-primary transition-all group">

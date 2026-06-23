@@ -29,11 +29,25 @@ import { PremiumChart } from "@/components/ui/PremiumChart";
 
 interface DashboardData {
   stats: {
-    totalRevenue: number;
     userCount: number;
     taxObjectCount: number;
-    totalPending: number;
+    paidCount: number;
+    unpaidCount: number;
   };
+  monthlyStats: Array<{
+    month: number;
+    revenue: number;
+    tunggakan: number;
+  }>;
+  submissions: Array<{
+    id: string;
+    number: string;
+    type: string;
+    title: string;
+    status: string;
+    createdAt: string;
+    owner: string;
+  }>;
   recentActivity: Array<{
     id: string;
     action: string;
@@ -46,6 +60,8 @@ interface DashboardData {
 function formatCurrency(val: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(val);
 }
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
 export const AdminDashboard = ({ session }: { session: Session }) => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -67,11 +83,16 @@ export const AdminDashboard = ({ session }: { session: Session }) => {
   }
 
   const kpis = [
-    { label: "Penerimaan Pajak (Net)", value: formatCurrency(data?.stats.totalRevenue ?? 0), change: "+24% Total", trend: "up", icon: CreditCard, color: "text-blue-500", bg: "bg-blue-50/50" },
-    { label: "Data Wajib Pajak", value: `${data?.stats.userCount ?? 0} Users`, change: "+12.5% MTD", trend: "up", icon: Users, color: "text-primary", bg: "bg-primary/5" },
-    { label: "Objek Pajak Terdata", value: `${data?.stats.taxObjectCount ?? 0} Nodes`, change: "92% Verified", trend: "up", icon: Building2, color: "text-emerald-500", bg: "bg-emerald-50/50" },
-    { label: "Pending Tasks", value: `${data?.stats.totalPending ?? 0} Tickets`, change: "High Urgency", trend: "down", icon: ShieldAlert, color: "text-amber-500", bg: "bg-amber-50/50" },
+    { label: "Total Wajib Pajak", value: `${data?.stats.userCount ?? 0} Users`, change: "Wajib Pajak Aktif", trend: "up", icon: Users, color: "text-blue-500", bg: "bg-blue-50/50" },
+    { label: "Total Objek Pajak", value: `${data?.stats.taxObjectCount ?? 0} Nodes`, change: "Objek Terdaftar", trend: "up", icon: Building2, color: "text-primary", bg: "bg-primary/5" },
+    { label: "Jumlah Sudah Membayar", value: `${data?.stats.paidCount ?? 0} Transaksi`, change: "Pembayaran Lunas", trend: "up", icon: ShieldCheck, color: "text-emerald-500", bg: "bg-emerald-50/50" },
+    { label: "Tunggakan / Utang Pajak", value: `${data?.stats.unpaidCount ?? 0} Tunggakan`, change: "Perlu Tindak Lanjut", trend: "down", icon: ShieldAlert, color: "text-amber-500", bg: "bg-amber-50/50" },
   ];
+
+  const chartData = (data?.monthlyStats || []).map(m => ({
+    label: MONTHS[m.month],
+    value: m.revenue
+  }));
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000 pb-20 selection:bg-primary/20 text-left">
@@ -92,9 +113,11 @@ export const AdminDashboard = ({ session }: { session: Session }) => {
                   </p>
                </div>
                <div className="flex flex-wrap gap-4 pt-6">
-                  <Button variant="primary" className="btn-premium px-12 h-18 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/30 group">
-                    Buka Command Center <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-2 transition-transform" />
-                  </Button>
+                  <Link href="/dashboard/admin/stats">
+                     <Button variant="primary" className="btn-premium px-12 h-18 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/30 group">
+                       Buka Command Center <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                     </Button>
+                  </Link>
                   <Button variant="outline" className="px-10 h-18 rounded-[2rem] bg-zinc-50 border-zinc-100 font-black uppercase text-[10px] tracking-widest hover:bg-white flex items-center gap-3">Live Update <Zap className="w-4 h-4 text-primary" /></Button>
                </div>
             </div>
@@ -125,48 +148,83 @@ export const AdminDashboard = ({ session }: { session: Session }) => {
          <Card padding="lg" variant="elevated" className="bg-white border-zinc-100 rounded-[5rem] shadow-2xl shadow-primary/5 p-16 md:p-24 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[80px] -z-10 group-hover:scale-110 transition-transform duration-[2000ms]" />
             <PremiumChart 
-               subtitle="Fiskal Performance Index"
-               title="Penerimaan Pajak Mingguan"
-               data={[
-                  { label: "Senin", value: 1250000000 },
-                  { label: "Selasa", value: 1450000000 },
-                  { label: "Rabu", value: 1100000000 },
-                  { label: "Kamis", value: 1800000000 },
-                  { label: "Jumat", value: 2100000000 },
-                  { label: "Sabtu", value: 850000000 },
-                  { label: "Minggu", value: 450000000 },
+               subtitle="Statistik Pajak Tahunan"
+               title="Penerimaan Pajak Bulanan"
+               data={chartData.length > 0 ? chartData : [
+                  { label: "Jan", value: 1250000000 },
+                  { label: "Feb", value: 1450000000 },
+                  { label: "Mar", value: 1100000000 },
+                  { label: "Apr", value: 1800000000 },
+                  { label: "Mei", value: 2100000000 },
+                  { label: "Jun", value: 850000000 },
+                  { label: "Jul", value: 450000000 },
                ]}
             />
          </Card>
       </section>
 
-      {/* ── Control Terminal (Hidden Features Unveiled) ── */}
+      {/* ── Dokumentasi Pengajuan ── */}
       <section className="animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
          <div className="flex items-center gap-4 mb-10 pl-4">
-            <div className="w-12 h-1 bg-primary rounded-full" />
-            <h2 className="text-2xl font-black italic tracking-tighter uppercase italic">Terminal <span className="text-primary">Kendali.</span></h2>
+            <div className="w-12 h-1 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
+            <h2 className="text-2xl font-black italic tracking-tighter uppercase italic">Dokumentasi <span className="text-primary">Pengajuan.</span></h2>
          </div>
-         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {[
-               { label: "Data Wajib Pajak", icon: Users, href: "/dashboard/admin/users", bg: "bg-blue-50/50", color: "text-blue-600" },
-               { label: "Audit Ledger", icon: Database, href: "/dashboard/admin/audit", bg: "bg-zinc-50", color: "text-zinc-600" },
-               { label: "CMS Konten", icon: Layers, href: "/dashboard/admin/cms", bg: "bg-emerald-50/50", color: "text-emerald-600" },
-               { label: "Monitoring Tax", icon: PieChart, href: "/dashboard/admin/stats", bg: "bg-primary/5", color: "text-primary" },
-               { label: "Riset & Data", icon: FileSearch, href: "/dashboard/admin/research", bg: "bg-amber-50/50", color: "text-amber-600" },
-               { label: "Log Transaksi", icon: History, href: "/dashboard/admin/payments", bg: "bg-rose-50/50", color: "text-rose-600" },
-               { label: "Pusat Bantuan", icon: MessageSquare, href: "/dashboard/admin/notifications", bg: "bg-indigo-50/50", color: "text-indigo-600" },
-               { label: "Setelan Sistem", icon: Settings, href: "/dashboard/admin/settings", bg: "bg-zinc-100", color: "text-zinc-400" },
-            ].map((item, i) => (
-               <Link key={i} href={item.href}>
-                  <Card padding="lg" className="group h-44 bg-white border-zinc-100/50 hover:border-primary/20 hover:scale-[1.05] transition-all duration-500 rounded-[3rem] shadow-xl shadow-primary/[0.03] flex flex-col items-center justify-center gap-4 text-center">
-                     <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform", item.bg, item.color)}>
-                        <item.icon className="w-6 h-6" />
-                     </div>
-                     <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-primary transition-colors italic px-2">{item.label}</span>
-                  </Card>
-               </Link>
-            ))}
-         </div>
+         <Card padding="none" className="bg-white border-zinc-100 rounded-[3rem] overflow-hidden shadow-2xl shadow-primary/[0.02]">
+            <div className="overflow-x-auto">
+               <table className="w-full text-left border-collapse">
+                  <thead>
+                     <tr className="bg-zinc-50 border-b border-zinc-100">
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">No. Pengajuan</th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Jenis Layanan</th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Subjek / Judul</th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Pengaju</th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Tanggal</th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Status</th>
+                        <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400 text-center">Aksi</th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100">
+                     {data?.submissions && data.submissions.length > 0 ? (
+                        data.submissions.map((sub) => (
+                           <tr key={sub.id} className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-8 py-6 text-xs font-black text-primary uppercase">{sub.number}</td>
+                              <td className="px-8 py-6 text-xs font-black text-zinc-600 uppercase">{sub.type}</td>
+                              <td className="px-8 py-6 text-xs font-bold text-zinc-800 line-clamp-1 max-w-[200px]">{sub.title}</td>
+                              <td className="px-8 py-6 text-xs text-zinc-500 font-bold">{sub.owner}</td>
+                              <td className="px-8 py-6 text-xs text-zinc-400 font-bold">{new Date(sub.createdAt).toLocaleDateString("id-ID")}</td>
+                              <td className="px-8 py-6">
+                                 <span className={cn(
+                                    "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                                    sub.status === "APPROVED" || sub.status === "RESOLVED"
+                                       ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                       : sub.status === "REJECTED" || sub.status === "CLOSED"
+                                       ? "bg-red-50 text-red-600 border-red-100"
+                                       : "bg-amber-50 text-amber-600 border-amber-100"
+                                 )}>
+                                    {sub.status}
+                                 </span>
+                              </td>
+                              <td className="px-8 py-6 text-center">
+                                 <Link href={
+                                    sub.type === "Riset Mahasiswa" ? "/dashboard/admin/research" :
+                                    sub.type === "Layanan PPID" ? "/dashboard/ppid" : "/dashboard/pengaduan"
+                                 }>
+                                    <Button variant="ghost" size="sm" className="font-black uppercase text-[10px] tracking-widest text-primary italic leading-none hover:bg-primary/5 px-4 py-2 rounded-xl">
+                                       Detail
+                                    </Button>
+                                 </Link>
+                              </td>
+                           </tr>
+                        ))
+                     ) : (
+                        <tr>
+                           <td colSpan={7} className="px-8 py-16 text-center text-zinc-400 italic font-bold">Tidak ada data pengajuan dokumen.</td>
+                        </tr>
+                     )}
+                  </tbody>
+               </table>
+            </div>
+         </Card>
       </section>
 
       {/* ── Activity & Intelligence Hub ── */}
@@ -217,9 +275,11 @@ export const AdminDashboard = ({ session }: { session: Session }) => {
                         <span className="text-[10px] font-black uppercase text-zinc-400 italic">Security: Tier 4</span>
                      </div>
                   </div>
-                  <Button variant="ghost" size="sm" className="font-black uppercase text-[10px] tracking-widest text-primary border-b border-primary/20 hover:border-primary transition-all group/btn">
-                    Tinjau Audit Penuh <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                  </Button>
+                  <Link href="/dashboard/admin/audit">
+                     <Button variant="ghost" size="sm" className="font-black uppercase text-[10px] tracking-widest text-primary border-b border-primary/20 hover:border-primary transition-all group/btn">
+                       Tinjau Audit Penuh <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                     </Button>
+                  </Link>
                </div>
             </Card>
          </div>
@@ -265,7 +325,7 @@ export const AdminDashboard = ({ session }: { session: Session }) => {
                   <p className="text-[10px] font-black uppercase tracking-widest italic opacity-60">Citizen Voice</p>
                   <h4 className="text-3xl font-black italic tracking-tighter uppercase leading-none">Respon <br/> Cepat.</h4>
                   <div className="flex items-center gap-3 mt-4">
-                    <span className="px-5 py-1.5 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest">{data?.stats.totalPending ?? 0} Tickets</span>
+                    <span className="px-5 py-1.5 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest">{data?.submissions.filter(s => s.status === 'PENDING' || s.status === 'OPEN').length ?? 0} Tickets</span>
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                   </div>
                </div>

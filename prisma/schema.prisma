@@ -31,6 +31,7 @@ model User {
   address       String?
   ktpUrl        String?   // URL foto KTP
   institution   String?   // Untuk mahasiswa: nama universitas
+  isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -43,7 +44,6 @@ model User {
   ppidRequests     PPIDRequest[]
   complaints       Complaint[]
   news             News[]
-  articles         Article[]
   announcements    Announcement[]
   notifications    Notification[]
 }
@@ -56,6 +56,7 @@ model Notification {
   title     String
   message   String   @db.Text
   type      String   // INFO, SUCCESS, WARNING, ERROR
+  category  String   @default("SYSTEM") // SYSTEM, DASHBOARD
   isRead    Boolean  @default(false)
   userId    String
   user      User     @relation(fields: [userId], references: [id])
@@ -149,20 +150,6 @@ model News {
   category  String
   isActive  Boolean  @default(true)
   viewCount Int      @default(0)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Article {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  title     String
-  summary   String   @db.Text
-  content   String   @db.Text
-  image     String?
-  isActive  Boolean  @default(true)
   authorId  String
   author    User     @relation(fields: [authorId], references: [id])
   createdAt DateTime @default(now())

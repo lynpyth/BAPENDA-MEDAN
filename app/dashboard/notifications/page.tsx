@@ -16,6 +16,7 @@ interface Notification {
   title: string;
   message: string;
   type: string;
+  category: string;
   isRead: boolean;
   createdAt: string;
 }
@@ -54,6 +55,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<"SYSTEM" | "DASHBOARD">("SYSTEM");
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -101,6 +103,14 @@ export default function NotificationsPage() {
     }
   };
 
+  const systemNotifications = notifications.filter(n => n.category === "SYSTEM");
+  const dashboardNotifications = notifications.filter(n => n.category === "DASHBOARD");
+
+  const unreadSystem = systemNotifications.filter(n => !n.isRead).length;
+  const unreadDashboard = dashboardNotifications.filter(n => !n.isRead).length;
+
+  const currentList = activeCategory === "SYSTEM" ? systemNotifications : dashboardNotifications;
+
   return (
     <div className="space-y-16 animate-in fade-in slide-in-from-bottom-6 duration-1000 pb-20 selection:bg-primary/20 text-left max-w-5xl">
       
@@ -131,17 +141,49 @@ export default function NotificationsPage() {
         )}
       </div>
 
+      {/* ── Tabs for System and Dashboard ── */}
+      <div className="flex gap-4 bg-zinc-50 p-2 rounded-[2rem] border border-zinc-100 shadow-inner w-fit">
+        <button
+          onClick={() => setActiveCategory("SYSTEM")}
+          className={cn(
+             "px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 cursor-pointer",
+             activeCategory === "SYSTEM" ? "bg-white text-primary shadow-xl border border-primary/10" : "text-zinc-400 hover:text-zinc-600"
+          )}
+        >
+          Notifikasi Sistem
+          {unreadSystem > 0 && (
+            <span className="px-2 py-0.5 bg-primary text-white text-[9px] font-bold rounded-full leading-none">
+              {unreadSystem}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveCategory("DASHBOARD")}
+          className={cn(
+             "px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 cursor-pointer",
+             activeCategory === "DASHBOARD" ? "bg-white text-primary shadow-xl border border-primary/10" : "text-zinc-400 hover:text-zinc-600"
+          )}
+        >
+          Notifikasi Dashboard
+          {unreadDashboard > 0 && (
+            <span className="px-2 py-0.5 bg-primary text-white text-[9px] font-bold rounded-full leading-none">
+              {unreadDashboard}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* ── Notification Feed ── */}
       <div className="space-y-8">
         {loading ? (
           [1, 2, 3].map(i => <div key={i} className="h-40 bg-zinc-50 border border-zinc-100 rounded-[3rem] animate-pulse shadow-inner" />)
-        ) : notifications.length === 0 ? (
+        ) : currentList.length === 0 ? (
           <div className="py-32 text-center bg-white border-2 border-dashed border-zinc-100 rounded-[5rem] group hover:border-primary/20 transition-all shadow-inner">
              <Bell className="w-20 h-20 text-zinc-100 mx-auto mb-8 group-hover:rotate-12 transition-all group-hover:text-primary/20" />
              <p className="text-xl font-black italic tracking-tighter text-zinc-300 uppercase italic">Void Feed — Belum Ada Notifikasi.</p>
           </div>
         ) : (
-          notifications.map((n) => (
+          currentList.map((n) => (
             <div 
               key={n.id} 
               onMouseEnter={() => !n.isRead && markAsRead(n.id)}

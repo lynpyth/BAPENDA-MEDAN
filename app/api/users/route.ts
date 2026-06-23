@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { AuditService } from "@/lib/services/audit";
+import bcrypt from "bcryptjs";
 
 export async function GET() {
   try {
@@ -20,6 +21,7 @@ export async function GET() {
         role: true,
         nik: true,
         phone: true,
+        isActive: true,
         createdAt: true,
         _count: { select: { taxObjects: true, payments: true } },
       },
@@ -39,21 +41,45 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id, role } = await req.json();
+    const { id, name, email, phone, nik, role, isActive, password } = await req.json();
     const oldUser = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, name: true, role: true },
     });
+
+    if (!oldUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const data: any = {
+      ...(name !== undefined && { name }),
+      ...(email !== undefined && { email }),
+      ...(phone !== undefined && { phone }),
+      ...(nik !== undefined && { nik }),
+      ...(role !== undefined && { role }),
+      ...(isActive !== undefined && { isActive }),
+    };
+
+    if (password) {
+      data.password = await bcrypt.hash(password, 10);
+    }
 
     const updated = await prisma.user.update({
       where: { id },
-      data: { role },
-      select: { id: true, name: true, role: true },
+      data,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        nik: true,
+        phone: true,
+        isActive: true,
+      },
     });
 
     await AuditService.log({
       userId: session.user.id,
-      action: "UPDATE_USER_ROLE",
+      action: "UPDATE_USER",
       table: "User",
       recordId: updated.id,
       oldValue: oldUser || undefined,
@@ -66,7 +92,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
-import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -75,7 +100,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { name, email, password, role } = await req.json();
+    const { name, email, password, role, nik, phone, address, isActive } = await req.json();
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return NextResponse.json({ error: "Email already exists" }, { status: 400 });
 
@@ -86,6 +111,10 @@ export async function POST(req: NextRequest) {
         email,
         password: hashedPassword,
         role: role || "USER",
+        nik,
+        phone,
+        address,
+        isActive: isActive !== undefined ? isActive : true,
       },
     });
 

@@ -70,71 +70,7 @@ export class CMSService {
     return deleted;
   }
 
-  /**
-   * Get all articles.
-   */
-  static async getArticles(activeOnly = true) {
-    return prisma.article.findMany({
-      where: activeOnly ? { isActive: true } : {},
-      orderBy: { createdAt: "desc" },
-      include: { author: { select: { name: true } } },
-    });
-  }
 
-  /**
-   * Create new article.
-   */
-  static async createArticle(data: { title: string; summary: string; content: string; authorId: string }) {
-    const slug = `${createSlug(data.title)}-${Date.now()}`;
-    const article = await prisma.article.create({
-      data: {
-        ...data,
-        slug,
-        isActive: true,
-      },
-    });
-
-    await AuditService.log({
-      userId: data.authorId,
-      action: "CREATE_ARTICLE",
-      table: "Article",
-      recordId: article.id,
-      newValue: article,
-    });
-
-    return article;
-  }
-
-  static async updateArticle(id: string, userId: string, data: Partial<{ title: string; summary: string; content: string; isActive: boolean }>) {
-    const oldVal = await prisma.article.findUnique({ where: { id } });
-    const article = await prisma.article.update({
-      where: { id },
-      data,
-    });
-
-    await AuditService.log({
-      userId,
-      action: "UPDATE_ARTICLE",
-      table: "Article",
-      recordId: article.id,
-      oldValue: oldVal || undefined,
-      newValue: article,
-    });
-
-    return article;
-  }
-
-  static async deleteArticle(id: string, userId: string) {
-    const deleted = await prisma.article.delete({ where: { id } });
-    await AuditService.log({
-      userId,
-      action: "DELETE_ARTICLE",
-      table: "Article",
-      recordId: id,
-      oldValue: deleted,
-    });
-    return deleted;
-  }
 
   /**
    * Get all announcements.

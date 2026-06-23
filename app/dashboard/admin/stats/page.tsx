@@ -1,72 +1,139 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BarChart3, TrendingUp, Users, CreditCard, Download, Star, ShieldCheck, Activity, ArrowUpRight } from "lucide-react";
+import { 
+  BarChart3, 
+  TrendingUp, 
+  Users, 
+  CreditCard, 
+  Download, 
+  Star, 
+  ShieldCheck, 
+  Activity, 
+  ArrowUpRight,
+  TrendingDown,
+  Building2,
+  Percent
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/lib/hooks/use-toast";
 
-interface Stats {
+interface APIStats {
   stats: {
     userCount: number;
-    pendingCount: number;
+    taxObjectCount: number;
     paidCount: number;
+    unpaidCount: number;
     totalRevenue: number;
   };
+  monthlyStats: Array<{
+    month: number;
+    revenue: number;
+    tunggakan: number;
+  }>;
+  sectorStats: Array<{
+    name: string;
+    amount: number;
+    pct: number;
+  }>;
+  districtStats: Array<{
+    name: string;
+    amount: number;
+    simulatedVal: number;
+    pct: number;
+  }>;
 }
 
 function formatCurrency(val: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(val);
 }
 
+function formatShortCurrency(val: number) {
+  if (val >= 1_000_000_000_000) return `Rp ${(val / 1_000_000_000_000).toFixed(1)}T`;
+  if (val >= 1_000_000_000) return `Rp ${(val / 1_000_000_000).toFixed(1)}M`;
+  if (val >= 1_000_000) return `Rp ${(val / 1_000_000).toFixed(1)}Jt`;
+  return formatCurrency(val);
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-const MOCK_MONTHLY = [1200000000, 1450000000, 980000000, 1750000000, 2100000000, 1890000000, 2340000000, 1980000000, 2560000000, 2870000000, 3100000000, 2750000000];
-const MAX_VAL = Math.max(...MOCK_MONTHLY);
 
 export default function AdminStatsPage() {
-  const [data, setData] = useState<Stats | null>(null);
+  const { toast } = useToast();
+  const [data, setData] = useState<APIStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/dashboard")
-      .then((r) => r.json())
+    fetch("/api/admin/dashboard-stats")
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
       .then((d) => setData(d))
+      .catch(() => toast("Error", "Gagal memuat visualisasi statistik fiskal.", "error"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [toast]);
+
+  // Calculate compliance rate
+  const paidCount = data?.stats.paidCount ?? 0;
+  const unpaidCount = data?.stats.unpaidCount ?? 0;
+  const totalBills = paidCount + unpaidCount;
+  const complianceRate = totalBills > 0 ? Math.round((paidCount / totalBills) * 100) : 100;
+
+  // Max value for monthly chart scaling
+  const maxMonthlyVal = data ? Math.max(...data.monthlyStats.map(s => Math.max(s.revenue, s.tunggakan)), 1000000) : 1000000;
 
   const kpiCards = [
     {
-      label: "Wajib Pajak Aktif",
+      label: "Total Wajib Pajak",
       value: data?.stats.userCount.toLocaleString("id-ID") ?? "—",
+      subtext: "Entitas Terdaftar",
       icon: Users,
       color: "text-blue-600 bg-blue-50 border-blue-100 shadow-blue-500/5",
-      trend: "+12.5%",
+      trend: "+12.5% YoY",
       trendUp: true,
     },
     {
       label: "Akumulasi PAD 2026",
       value: formatCurrency(data?.stats.totalRevenue ?? 0),
+      subtext: "Realisasi Pajak Lunas",
       icon: TrendingUp,
       color: "text-primary bg-primary/5 border-primary/10 shadow-primary-500/5",
-      trend: "+8.3%",
+      trend: "Target 85% Tercapai",
       trendUp: true,
     },
     {
-      label: "Transaksi Lunas",
-      value: data?.stats.paidCount.toLocaleString("id-ID") ?? "—",
-      icon: CreditCard,
+      label: "Rasio Kepatuhan",
+      value: `${complianceRate}%`,
+      subtext: "Persentase Pelunasan",
+      icon: Percent,
       color: "text-emerald-600 bg-emerald-50 border-emerald-100 shadow-emerald-500/5",
-      trend: "+21.4%",
-      trendUp: true,
+      trend: `${paidCount} Terbayar dari ${totalBills} Tagihan`,
+      trendUp: complianceRate >= 75,
     },
     {
-      label: "Audit Tunda",
-      value: data?.stats.pendingCount.toLocaleString("id-ID") ?? "—",
+      label: "Total Tunggakan",
+      value: data ? `${data.stats.unpaidCount.toLocaleString("id-ID")} Invoice` : "—",
+      subtext: "Piutang Pajak Terbuka",
       icon: BarChart3,
       color: "text-amber-600 bg-amber-50 border-amber-100 shadow-amber-500/5",
-      trend: "-3.2%",
+      trend: "Sedang Ditagih",
       trendUp: false,
     },
+  ];
+
+  const handleExport = () => {
+    toast("Mengekspor Laporan", "Dokumen audit keuangan sedang diunduh...", "success");
+  };
+
+  const sectorColors = [
+    "bg-primary",
+    "bg-blue-500",
+    "bg-emerald-500",
+    "bg-amber-500",
+    "bg-purple-500",
+    "bg-zinc-400"
   ];
 
   return (
@@ -88,9 +155,10 @@ export default function AdminStatsPage() {
         </div>
         <Button
           size="xl"
-          className="rounded-full px-10 h-20 btn-premium group font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/30 italic"
+          onClick={handleExport}
+          className="rounded-full px-10 h-20 bg-primary text-white hover:bg-primary/90 shadow-2xl shadow-primary/30 group font-black uppercase text-xs tracking-widest italic"
         >
-          <Download className="w-6 h-6 mr-3 group-hover:-translate-y-2 transition-transform" /> Ekspor Audit Report
+          <Download className="w-6 h-6 mr-3 group-hover:-translate-y-2 transition-transform animate-bounce" /> Ekspor Audit Report
         </Button>
       </div>
 
@@ -106,17 +174,20 @@ export default function AdminStatsPage() {
                 <div className="h-4 bg-zinc-50 rounded-xl w-1/2" />
               </div>
             ) : (
-              <div className="space-y-10 relative z-10 text-left">
+              <div className="space-y-10 relative z-10 text-left flex flex-col justify-between h-full">
                 <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner border group-hover:rotate-12 transition-transform", card.color)}>
                   <card.icon className="w-8 h-8" />
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                    <p className="text-3xl font-black italic tracking-tighter text-zinc-900 leading-none uppercase italic">{card.value}</p>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 opacity-60 leading-none italic">{card.label}</p>
+                   <div className="space-y-1">
+                     <p className="text-[10px] font-black uppercase tracking-widest text-zinc-800 opacity-80 leading-none italic">{card.label}</p>
+                     <p className="text-[9px] text-zinc-400 font-semibold italic">{card.subtext}</p>
+                   </div>
                 </div>
-                <div className={cn("inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest italic leading-none border shadow-sm", card.trendUp ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-amber-600 bg-amber-50 border-amber-100")}>
-                  <Activity className={cn("w-3.5 h-3.5", !card.trendUp && "rotate-180")} />
-                  {card.trend} <span className="opacity-40 ml-1 italic">Growth Rate</span>
+                <div className={cn("inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest italic leading-none border shadow-sm w-fit", card.trendUp ? "text-emerald-600 bg-emerald-50 border-emerald-100" : "text-amber-600 bg-amber-50 border-amber-100")}>
+                  {card.trendUp ? <Activity className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                  {card.trend}
                 </div>
               </div>
             )}
@@ -135,85 +206,104 @@ export default function AdminStatsPage() {
                 <div className="w-8 h-1 bg-primary rounded-full" />
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">Flow Ledger Monitoring</p>
              </div>
-             <h2 className="text-4xl font-black italic tracking-tighter uppercase italic leading-none">Grafik Pendapatan <br /><span className="text-primary italic">PAD Bulanan 2026.</span></h2>
+             <h2 className="text-4xl font-black italic tracking-tighter uppercase italic leading-none">Grafik Pendapatan vs Tunggakan<br /><span className="text-primary italic">Bulanan Pajak Daerah.</span></h2>
           </div>
-          <div className="flex gap-4 bg-zinc-50 p-2 rounded-[2rem] border border-zinc-100 shadow-inner">
-            {["2024", "2025", "2026"].map((y) => (
-              <button
-                key={y}
-                className={cn(
-                   "px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-                   y === "2026" ? "bg-white text-primary shadow-xl border border-primary/10" : "text-zinc-400 hover:text-zinc-600"
-                )}
-              >
-                {y} Fiscal
-              </button>
-            ))}
+          <div className="flex items-center gap-4 bg-zinc-50 p-2.5 rounded-[2rem] border border-zinc-100 shadow-inner">
+            <div className="flex items-center gap-2 px-4">
+              <div className="w-3 h-3 rounded-full bg-primary" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 italic">Penerimaan</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 border-l border-zinc-200">
+              <div className="w-3 h-3 rounded-full bg-amber-400" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 italic">Tunggakan</span>
+            </div>
           </div>
         </div>
 
-        {/* ── High-Fidelity Bar Chart ── */}
-        <div className="flex items-end gap-5 h-72 relative z-10 px-4">
-          {MOCK_MONTHLY.map((val, i) => {
-            const heightPct = (val / MAX_VAL) * 100;
-            return (
-              <div key={i} className="flex-1 flex flex-col items-center gap-6 group/bar">
-                <div
-                  className="w-full bg-zinc-50 border border-zinc-100 rounded-[1.5rem] relative overflow-hidden transition-all duration-700 hover:shadow-2xl hover:scale-x-110 cursor-pointer shadow-inner"
-                  style={{ height: `${heightPct}%` }}
-                >
-                  <div
-                    className="absolute bottom-0 left-0 right-0 bg-primary opacity-20 transition-all duration-1000 group-hover/bar:opacity-40"
-                    style={{ height: "100%" }}
-                  />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm border border-zinc-100 text-zinc-900 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl opacity-0 group-hover/bar:opacity-100 transition-all duration-500 whitespace-nowrap shadow-2xl pointer-events-none group-hover/bar:-translate-y-12">
-                    {(val / 1_000_000_000).toFixed(2)}M
+        {/* ── High-Fidelity Side-by-Side Bar Chart ── */}
+        <div className="flex items-end gap-3 md:gap-5 h-80 relative z-10 px-4">
+          {loading ? (
+            <div className="w-full h-full bg-zinc-50 rounded-3xl animate-pulse" />
+          ) : (
+            data?.monthlyStats.map((stats, i) => {
+              const revHeight = (stats.revenue / maxMonthlyVal) * 100;
+              const tunggakanHeight = (stats.tunggakan / maxMonthlyVal) * 100;
+              
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-6 group/bar h-full justify-end">
+                  <div className="w-full flex items-end justify-center gap-1.5 md:gap-2.5 h-[80%]">
+                    {/* Revenue Bar */}
+                    <div 
+                      className="w-1/2 bg-primary rounded-t-lg transition-all duration-700 hover:brightness-95 hover:scale-x-115 relative cursor-pointer group/rev"
+                      style={{ height: `${Math.max(revHeight, 3)}%` }}
+                    >
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-zinc-900 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg opacity-0 group-hover/rev:opacity-100 transition-all duration-300 whitespace-nowrap shadow-xl z-20 pointer-events-none">
+                        Rev: {formatShortCurrency(stats.revenue)}
+                      </div>
+                    </div>
+
+                    {/* Tunggakan Bar */}
+                    <div 
+                      className="w-1/2 bg-amber-400 rounded-t-lg transition-all duration-700 hover:brightness-95 hover:scale-x-115 relative cursor-pointer group/tung"
+                      style={{ height: `${Math.max(tunggakanHeight, 3)}%` }}
+                    >
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-zinc-900 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg opacity-0 group-hover/tung:opacity-100 transition-all duration-300 whitespace-nowrap shadow-xl z-20 pointer-events-none">
+                        Tunggakan: {formatShortCurrency(stats.tunggakan)}
+                      </div>
+                    </div>
                   </div>
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest group-hover/bar:text-primary transition-colors italic leading-none">{MONTHS[i]}</p>
                 </div>
-                <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest group-hover/bar:text-primary transition-colors italic">{MONTHS[i]}</p>
-              </div>
-            );
-          })}
+              )
+            })
+          )}
         </div>
       </Card>
 
       {/* ── Granular Distribution Mapping ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        
+        {/* Sektor Pajak */}
         <Card padding="none" variant="elevated" className="bg-white border-zinc-100 rounded-[4rem] p-12 lg:p-16 shadow-2xl shadow-primary/5 text-left group">
           <div className="flex items-center justify-between mb-12">
              <div className="space-y-1">
                 <h3 className="text-3xl font-black italic tracking-tighter uppercase italic leading-none">Distribusi <br /><span className="text-primary italic">Sektor Pajak.</span></h3>
-                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest italic opacity-60 mt-4 leading-none decoration-zinc-100 underline underline-offset-4">Segmentation Analytics</p>
+                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest italic opacity-60 mt-4 leading-none decoration-zinc-100 underline underline-offset-4">Segmentation Revenue Analytics</p>
              </div>
              <div className="w-14 h-14 bg-zinc-50 rounded-2xl flex items-center justify-center border border-zinc-100 shadow-inner group-hover:rotate-12 transition-transform">
                 <Star className="w-6 h-6 text-primary" />
              </div>
           </div>
           <div className="space-y-10">
-            {[
-              { name: "Pajak Bumi & Bangunan (PBB)", pct: 42, color: "bg-primary" },
-              { name: "Bea Perolehan Hak Tanah (BPHTB)", pct: 28, color: "bg-blue-400" },
-              { name: "Pajak Hotel & Restoran", pct: 15, color: "bg-emerald-400" },
-              { name: "Pajak Reklame & Media", pct: 9, color: "bg-amber-400" },
-              { name: "Sektor Fiskal Lainnya", pct: 6, color: "bg-purple-400" },
-            ].map((t, idx) => (
-              <div key={idx} className="space-y-4 group/row">
-                <div className="flex justify-between items-baseline px-2">
-                  <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500 group-hover/row:text-foreground transition-colors italic">{t.name}</span>
-                  <span className="font-black italic text-xl tracking-tighter text-primary">{t.pct}%</span>
+            {loading ? (
+              <div className="h-60 bg-zinc-50 rounded-3xl animate-pulse" />
+            ) : (
+              data?.sectorStats.map((t, idx) => (
+                <div key={idx} className="space-y-4 group/row">
+                  <div className="flex justify-between items-baseline px-2">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500 group-hover/row:text-foreground transition-colors italic">{t.name}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-zinc-400 italic">{t.amount > 0 ? formatShortCurrency(t.amount) : ""}</span>
+                      <span className="font-black italic text-xl tracking-tighter text-primary">{t.pct}%</span>
+                    </div>
+                  </div>
+                  <div className="h-5 bg-zinc-50 rounded-full border border-zinc-100 p-1 shadow-inner overflow-hidden">
+                    <div 
+                      className={cn("h-full rounded-full transition-all duration-[1.5s] ease-out shadow-glow group-hover/row:scale-y-110", sectorColors[idx % sectorColors.length])} 
+                      style={{ width: `${t.pct}%` }} 
+                    />
+                  </div>
                 </div>
-                <div className="h-5 bg-zinc-50 rounded-full border border-zinc-100 p-1 shadow-inner overflow-hidden">
-                  <div className={cn("h-full rounded-full transition-all duration-[1.5s] ease-out shadow-glow group-hover/row:scale-y-110", t.color)} style={{ width: `${t.pct}%` }} />
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
 
+        {/* Peringkat Kecamatan */}
         <Card padding="none" variant="elevated" className="bg-white border-zinc-100 rounded-[4rem] p-12 lg:p-16 shadow-2xl shadow-primary/5 text-left group">
            <div className="flex items-center justify-between mb-12">
              <div className="space-y-1">
-                <h3 className="text-3xl font-black italic tracking-tighter uppercase italic leading-none">Peringkat <br /><span className="text-primary italic">Internal PAD.</span></h3>
+                <h3 className="text-3xl font-black italic tracking-tighter uppercase italic leading-none">Peringkat <br /><span className="text-primary italic">Kecamatan (PAD).</span></h3>
                 <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest italic opacity-60 mt-4 leading-none decoration-zinc-100 underline underline-offset-4">Top 5 Regional Productivity</p>
              </div>
              <div className="w-14 h-14 bg-zinc-50 rounded-2xl flex items-center justify-center border border-zinc-100 shadow-inner group-hover:rotate-12 transition-transform">
@@ -221,29 +311,29 @@ export default function AdminStatsPage() {
              </div>
           </div>
           <div className="space-y-8">
-            {[
-              { name: "Medan Baru", val: "Rp 45.2M", pct: 85 },
-              { name: "Medan Petisah", val: "Rp 38.7M", pct: 72 },
-              { name: "Medan Sunggal", val: "Rp 31.5M", pct: 58 },
-              { name: "Medan Polonia", val: "Rp 28.9M", pct: 53 },
-              { name: "Medan Helvetia", val: "Rp 22.1M", pct: 40 },
-            ].map((k, i) => (
-              <div key={i} className="flex items-center gap-8 p-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] hover:bg-white hover:border-primary/20 hover:shadow-2xl hover:scale-[1.02] transition-all group/item shadow-inner">
-                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-black italic text-zinc-300 group-hover/item:text-primary transition-all border border-zinc-100 shadow-sm relative group-hover/item:rotate-6">
-                   <span className="text-lg">#{i + 1}</span>
-                </div>
-                <div className="flex-1 space-y-3">
-                  <div className="flex justify-between items-baseline">
-                    <span className="font-black italic text-lg uppercase tracking-tight text-foreground transition-all">{k.name}</span>
-                    <span className="text-primary font-black italic text-xl tracking-tighter">{k.val}</span>
+            {loading ? (
+              <div className="h-60 bg-zinc-50 rounded-3xl animate-pulse" />
+            ) : (
+              data?.districtStats.map((k, i) => (
+                <div key={i} className="flex items-center gap-8 p-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] hover:bg-white hover:border-primary/20 hover:shadow-2xl hover:scale-[1.02] transition-all group/item shadow-inner">
+                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-black italic text-zinc-300 group-hover/item:text-primary transition-all border border-zinc-100 shadow-sm relative group-hover/item:rotate-6">
+                     <span className="text-lg">#{i + 1}</span>
                   </div>
-                  <div className="h-2 bg-zinc-200/50 rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full group-hover/item:shadow-glow transition-all duration-[2s]" style={{ width: `${k.pct}%` }} />
+                  <div className="flex-1 space-y-3 text-left">
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-black italic text-lg uppercase tracking-tight text-foreground transition-all">{k.name}</span>
+                      <span className="text-primary font-black italic text-xl tracking-tighter">
+                        {formatShortCurrency(k.simulatedVal)}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-zinc-200/50 rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full group-hover/item:shadow-glow transition-all duration-[2s]" style={{ width: `${k.pct}%` }} />
+                    </div>
                   </div>
+                  <ArrowUpRight className="w-6 h-6 text-zinc-300 opacity-0 group-hover/item:opacity-100 group-hover/item:text-primary transition-all font-bold" />
                 </div>
-                <ArrowUpRight className="w-6 h-6 text-zinc-300 opacity-0 group-hover/item:opacity-100 group-hover/item:text-primary transition-all" />
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
       </div>

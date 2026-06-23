@@ -9,11 +9,13 @@ export class NotificationService {
     title,
     message,
     type = "INFO",
+    category = "SYSTEM",
   }: {
     userId: string;
     title: string;
     message: string;
     type?: "INFO" | "SUCCESS" | "WARNING" | "ERROR";
+    category?: "SYSTEM" | "DASHBOARD";
   }) {
     // 1. In-app notification
     const notification = await prisma.notification.create({
@@ -22,6 +24,7 @@ export class NotificationService {
         title,
         message,
         type,
+        category,
       },
       include: { user: { select: { email: true, name: true } } },
     });
