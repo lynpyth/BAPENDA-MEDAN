@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { 
+import {
   BarChart3, 
   Users, 
   ShieldCheck, 
@@ -23,7 +23,13 @@ import {
   Bell,
   Search,
   User as UserIcon,
-  ChevronDown
+  ChevronDown,
+  Map,
+  Layers,
+  TrendingUp,
+  MapPin,
+  Scale,
+  Activity
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
@@ -51,14 +57,22 @@ export const DashboardSidebar = () => {
         ...base,
         { href: "/dashboard/admin/users", label: "Manajemen User", icon: Users },
         { href: "/dashboard/admin/tax-objects", label: "Daftar Objek Pajak", icon: Building2 },
+        { href: "/dashboard/admin/sppt", label: "Penerbitan SPPT", icon: FileText },
+        { href: "/dashboard/admin/submissions", label: "Dokumentasi Pengajuan", icon: ShieldCheck },
         { href: "/dashboard/admin/payments", label: "Monitoring Kas", icon: CreditCard },
         { href: "/dashboard/admin/stats", label: "Statistik Pajak", icon: BarChart3 },
         { href: "/dashboard/admin/audit", label: "Audit Log Sistem", icon: ShieldCheck },
         { href: "/dashboard/admin/announcements", label: "Pengumuman", icon: Megaphone },
         { href: "/dashboard/admin/research", label: "Permohonan Riset", icon: GraduationCap },
-        { href: "/dashboard/admin/cms/news", label: "CMS: Berita", icon: FileText },
         { href: "/dashboard/ppid", label: "Permohonan PPID", icon: FileQuestion },
         { href: "/dashboard/pengaduan", label: "Pengaduan", icon: Megaphone },
+        // GIS Menu
+        { href: "/dashboard/gis/peta-bidang", label: "Peta Bidang PBB", icon: Map },
+        { href: "/dashboard/gis/znt", label: "Zona Nilai Tanah", icon: Layers },
+        { href: "/dashboard/gis/pasar-properti", label: "Pasar Properti", icon: TrendingUp },
+        { href: "/dashboard/gis/pendataan", label: "Geo Pendataan", icon: MapPin },
+        { href: "/dashboard/gis/penilaian", label: "Geo Penilaian", icon: Scale },
+        { href: "/dashboard/gis/integrasi", label: "Portal Integrasi Data", icon: Activity },
       ];
     }
 
@@ -66,10 +80,18 @@ export const DashboardSidebar = () => {
       return [
         ...base,
         { href: "/dashboard/admin/tax-objects", label: "Daftar Objek Pajak", icon: Building2 },
+        { href: "/dashboard/admin/sppt", label: "Penerbitan SPPT", icon: FileText },
+        { href: "/dashboard/admin/submissions", label: "Dokumentasi Pengajuan", icon: ShieldCheck },
         { href: "/dashboard/admin/payments", label: "Monitoring Kas", icon: CreditCard },
         { href: "/dashboard/admin/research", label: "Permohonan Riset", icon: GraduationCap },
         { href: "/dashboard/ppid", label: "Permohonan PPID", icon: FileQuestion },
         { href: "/dashboard/pengaduan", label: "Pengaduan", icon: Megaphone },
+        // GIS Menu
+        { href: "/dashboard/gis/peta-bidang", label: "Peta Bidang PBB", icon: Map },
+        { href: "/dashboard/gis/znt", label: "Zona Nilai Tanah", icon: Layers },
+        { href: "/dashboard/gis/pasar-properti", label: "Pasar Properti", icon: TrendingUp },
+        { href: "/dashboard/gis/pendataan", label: "Geo Pendataan", icon: MapPin },
+        { href: "/dashboard/gis/penilaian", label: "Geo Penilaian", icon: Scale },
       ];
     }
 
@@ -84,10 +106,14 @@ export const DashboardSidebar = () => {
     return [
       ...base,
       { href: "/dashboard/pajak/objek", label: "Objek Pajak", icon: Building2 },
+      { href: "/dashboard/pajak/sppt", label: "SPPT Digital", icon: FileText },
+      { href: "/dashboard/pengajuan", label: "Dokumentasi Pengajuan", icon: ShieldCheck },
       { href: "/dashboard/pajak/riwayat", label: "Riwayat Bayar", icon: CreditCard },
       { href: "/dashboard/pajak/hitung", label: "Simulasi Pajak", icon: Calculator },
       { href: "/dashboard/ppid", label: "Layanan PPID", icon: FileQuestion },
       { href: "/dashboard/pengaduan", label: "E-Pengaduan", icon: Megaphone },
+      // GIS Menu
+      { href: "/dashboard/gis/peta-bidang", label: "Peta Bidang PBB", icon: Map },
     ];
   };
 
@@ -122,23 +148,25 @@ export const DashboardSidebar = () => {
             </div>
           </div>
 
-          {/* Global Search Bar */}
-          <div className="mb-6 relative group px-2">
-             <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-300 group-focus-within:text-primary transition-colors" />
-             <input 
-               type="text" 
-               placeholder="Cari global..." 
-               className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 transition-all text-xs font-bold italic"
-               onKeyDown={(e) => {
-                 if (e.key === "Enter") {
-                   const val = e.currentTarget.value.trim();
-                   if (val) {
-                     window.location.href = `/dashboard/admin/search?q=${encodeURIComponent(val)}`;
+          {/* Global Search Bar (Admin & Officer only) */}
+          {(role === "ADMIN" || role === "OFFICER") && (
+            <div className="mb-6 relative group px-2">
+               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-300 group-focus-within:text-primary transition-colors" />
+               <input 
+                 type="text" 
+                 placeholder="Cari global..." 
+                 className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 transition-all text-xs font-bold italic"
+                 onKeyDown={(e) => {
+                   if (e.key === "Enter") {
+                     const val = e.currentTarget.value.trim();
+                     if (val) {
+                       window.location.href = `/dashboard/admin/search?q=${encodeURIComponent(val)}`;
+                     }
                    }
-                 }
-               }}
-             />
-          </div>
+                 }}
+               />
+            </div>
+          )}
 
           <nav className="flex-1 space-y-1.5 overflow-y-auto no-scrollbar pr-2">
             {navItems.map((item) => {

@@ -21,9 +21,36 @@ export async function GET() {
         role: true,
         nik: true,
         phone: true,
+        address: true,
         isActive: true,
         createdAt: true,
         _count: { select: { taxObjects: true, payments: true } },
+        payments: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            createdAt: true,
+            taxObject: {
+              select: {
+                name: true,
+                nop: true
+              }
+            }
+          }
+        },
+        auditLogs: {
+          take: 10,
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            action: true,
+            table: true,
+            createdAt: true,
+            oldValue: true,
+            newValue: true
+          }
+        }
       },
     });
 

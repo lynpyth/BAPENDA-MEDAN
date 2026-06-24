@@ -45,6 +45,8 @@ export default function TagihanPajakPage() {
   const [nopSearch, setNopSearch] = useState("");
   const snapUrl = "https://app.sandbox.midtrans.com/snap/snap.js";
 
+  const [showMockForId, setShowMockForId] = useState<string | null>(null);
+
   useEffect(() => {
     fetch("/api/tax/pay")
       .then((r) => r.json())
@@ -95,6 +97,30 @@ export default function TagihanPajakPage() {
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Gagal inisialisasi pembayaran";
+      toast("Mode Simulasi Diaktifkan", `${message}. Mengaktifkan tombol simulasi bayar instan.`, "warning");
+      setShowMockForId(payment.id);
+      setProcessing(false);
+    }
+  };
+
+  const handleMockPay = async (payment: Payment) => {
+    setSelected(payment);
+    setProcessing(true);
+    try {
+      const res = await fetch("/api/tax/pay/mock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId: payment.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal melakukan simulasi pembayaran");
+
+      setPayments((prev) => prev.map((p) => (p.id === payment.id ? { ...p, status: "PAID" } : p)));
+      setStep("success");
+      setProcessing(false);
+      toast("Pembayaran Berhasil (Simulasi)", "Terima kasih telah memenuhi kewajiban pajak Anda melalui simulasi.", "success");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Gagal simulasi pembayaran";
       toast("Error", message, "error");
       setProcessing(false);
     }
@@ -199,13 +225,24 @@ export default function TagihanPajakPage() {
                   </div>
                   
                   <Button
-                    loading={processing && selected?.id === p.id}
+                    loading={processing && selected?.id === p.id && !showMockForId}
                     onClick={() => handlePay(p)}
                     size="xl"
                     className="w-full h-20 rounded-full btn-premium flex items-center justify-center gap-4 font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/30"
                   >
                     Bayar Sekarang <QrCode className="w-6 h-6 group-hover:rotate-12 transition-transform" />
                   </Button>
+                  
+                  {showMockForId === p.id && (
+                    <Button
+                      loading={processing && selected?.id === p.id}
+                      onClick={() => handleMockPay(p)}
+                      variant="outline"
+                      className="w-full h-14 mt-4 rounded-[1.5rem] border-dashed border-amber-500 text-amber-600 hover:bg-amber-50/50 flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all"
+                    >
+                      Simulasi Bayar Instan (Bypass) <CheckCircle className="w-4 h-4" />
+                    </Button>
+                  )}
                </div>
             </Card>
           ))

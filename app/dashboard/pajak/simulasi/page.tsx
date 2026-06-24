@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-type TaxType = "PBB" | "BPHTB" | "REKLAME" | "PARKIR" | "HOTEL" | "RESTORAN";
+type TaxType = "PKB" | "BBN_KB" | "PBB_KB" | "P_ROKOK" | "P_REKLAME" | "PAT" | "PBB_P2" | "BPHTB" | "PAB" | "PBJT_HOTEL" | "PBJT_MAMIN" | "PBJT_HIBURAN" | "PBJT_LISTRIK" | "PBJT_PARKIR";
 
 interface SimResult {
   taxType: string;
@@ -19,30 +19,26 @@ interface SimResult {
 }
 
 const TAX_TYPES: Array<{ id: TaxType; label: string; desc: string; rate: number; unit: string; hasNJOPTKP?: boolean }> = [
+  { id: "PKB", label: "Pajak Kendaraan Bermotor (PKB)", desc: "Pajak tahunan kendaraan bermotor", rate: 0.02, unit: "NJKB (Nilai Jual Kendaraan) (Rp)" },
+  { id: "BBN_KB", label: "Bea Balik Nama (BBN-KB)", desc: "BBN-KB atas kepemilikan kendaraan", rate: 0.10, unit: "NJKB (Nilai Jual Kendaraan) (Rp)" },
+  { id: "PBB_KB", label: "Pajak Bahan Bakar (PBB-KB)", desc: "PBB-KB atas penggunaan bahan bakar", rate: 0.075, unit: "Pembelian Bahan Bakar Sebelum Pajak (Rp)" },
+  { id: "P_ROKOK", label: "Pajak Rokok", desc: "Pajak atas cukai tembakau", rate: 0.10, unit: "Cukai Rokok (Rp)" },
+  { id: "P_REKLAME", label: "Pajak Reklame", desc: "Pajak pemasangan media reklame/iklan", rate: 0.25, unit: "Nilai Sewa/Kontrak (Rp)" },
+  { id: "PAT", label: "Pajak Air Tanah (PAT)", desc: "Pajak pemanfaatan air bawah tanah", rate: 0.20, unit: "Nilai Perolehan Air (NPA) (Rp)" },
   {
-    id: "PBB", label: "Pajak Bumi & Bangunan", desc: "PBB-P2 untuk properti & tanah",
-    rate: 0.002, unit: "Nilai NJOP (Rp)", hasNJOPTKP: true,
+    id: "PBB_P2", label: "PBB-P2 (Bumi & Bangunan)", desc: "PBB-P2 untuk tanah & properti",
+    rate: 0.0015, unit: "Nilai NJOP (Rp)", hasNJOPTKP: true,
   },
   {
     id: "BPHTB", label: "BPHTB", desc: "Bea Perolehan Hak atas Tanah & Bangunan",
     rate: 0.05, unit: "Nilai Transaksi (Rp)", hasNJOPTKP: true,
   },
-  {
-    id: "REKLAME", label: "Pajak Reklame", desc: "Pajak pemasangan reklame & spanduk",
-    rate: 0.25, unit: "Nilai Sewa/Kontrak (Rp)",
-  },
-  {
-    id: "PARKIR", label: "Pajak Parkir", desc: "Pajak penyelenggaraan tempat parkir",
-    rate: 0.20, unit: "Omzet Parkir (Rp)",
-  },
-  {
-    id: "HOTEL", label: "Pajak Hotel", desc: "Pajak atas pelayanan hotel",
-    rate: 0.10, unit: "Omzet Hotel (Rp)",
-  },
-  {
-    id: "RESTORAN", label: "Pajak Restoran", desc: "Pajak atas pelayanan restoran/kafetaria",
-    rate: 0.10, unit: "Omzet Restoran (Rp)",
-  },
+  { id: "PAB", label: "Pajak Alat Berat (PAB)", desc: "Pajak atas kepemilikan alat berat", rate: 0.002, unit: "Nilai Jual Alat Berat (Rp)" },
+  { id: "PBJT_HOTEL", label: "PBJT Jasa Perhotelan", desc: "PBJT atas penyediaan akomodasi hotel", rate: 0.10, unit: "Omzet Penjualan (Rp)" },
+  { id: "PBJT_MAMIN", label: "PBJT Makanan & Minuman", desc: "PBJT atas pelayanan restoran & warung", rate: 0.10, unit: "Omzet Penjualan (Rp)" },
+  { id: "PBJT_HIBURAN", label: "PBJT Kesenian & Hiburan", desc: "PBJT atas jasa kesenian & hiburan", rate: 0.15, unit: "Omzet Penjualan (Rp)" },
+  { id: "PBJT_LISTRIK", label: "PBJT Tenaga Listrik", desc: "PBJT atas penggunaan tenaga listrik", rate: 0.03, unit: "Biaya Pemakaian Listrik (Rp)" },
+  { id: "PBJT_PARKIR", label: "PBJT Jasa Parkir", desc: "PBJT atas penyelenggaraan tempat parkir", rate: 0.10, unit: "Omzet Parkir (Rp)" },
 ];
 
 // NJOPTKP standard Kota Medan 2025
@@ -62,7 +58,7 @@ function parseNumber(val: string) {
 }
 
 export default function SimulasiPajakPage() {
-  const [selectedType, setSelectedType] = useState<TaxType>("PBB");
+  const [selectedType, setSelectedType] = useState<TaxType>("PBB_P2");
   const [inputValue, setInputValue] = useState("");
   const [njoptkp, setNjoptkp] = useState(NJOPTKP_DEFAULT.toString());
   const [result, setResult] = useState<SimResult | null>(null);
@@ -80,7 +76,7 @@ export default function SimulasiPajakPage() {
       let taxAmount = 0;
       const breakdown: SimResult["breakdown"] = [];
 
-      if (selectedType === "PBB") {
+      if (selectedType === "PBB_P2") {
         const njoptkpVal = parseNumber(njoptkp) || NJOPTKP_DEFAULT;
         const njkp = Math.max(0, base - njoptkpVal); 
         taxAmount = njkp * taxConfig.rate;
@@ -197,7 +193,7 @@ export default function SimulasiPajakPage() {
                    </div>
                 </div>
 
-                {taxConfig.hasNJOPTKP && selectedType === "PBB" && (
+                {taxConfig.hasNJOPTKP && selectedType === "PBB_P2" && (
                   <div className="space-y-4">
                     <label className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 italic pl-6">NJOPTKP (Default Medan 2025)</label>
                     <div className="relative group">

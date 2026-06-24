@@ -13,13 +13,13 @@ import {
   ShieldAlert,
   Loader2,
   Bell,
-  PieChart,
-  Database,
+  BarChart3,
+  TrendingUp,
+  FileText,
+  Percent,
+  TrendingDown,
   Layers,
-  FileSearch,
-  History,
-  MessageSquare,
-  Settings
+  ArrowUpRight
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -31,8 +31,12 @@ interface DashboardData {
   stats: {
     userCount: number;
     taxObjectCount: number;
-    paidCount: number;
-    unpaidCount: number;
+    spptCount: number;
+    totalPajakTerutang: number;
+    totalPembayaranMasuk: number;
+    totalTunggakanPajak: number;
+    activeWpCount: number;
+    kepatuhanRate: number;
   };
   monthlyStats: Array<{
     month: number;
@@ -55,6 +59,7 @@ interface DashboardData {
     createdAt: string;
     user: { name: string | null };
   }>;
+  objCategoryCounts: Record<string, number>;
 }
 
 function formatCurrency(val: number) {
@@ -66,6 +71,7 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "
 export const AdminDashboard = ({ session }: { session: Session }) => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [chartTab, setChartTab] = useState<"monthly" | "yearly" | "comparison" | "growth" | "category">("monthly");
 
   useEffect(() => {
     fetch("/api/admin/dashboard-stats")
@@ -83,91 +89,190 @@ export const AdminDashboard = ({ session }: { session: Session }) => {
   }
 
   const kpis = [
-    { label: "Total Wajib Pajak", value: `${data?.stats.userCount ?? 0} Users`, change: "Wajib Pajak Aktif", trend: "up", icon: Users, color: "text-blue-500", bg: "bg-blue-50/50" },
-    { label: "Total Objek Pajak", value: `${data?.stats.taxObjectCount ?? 0} Nodes`, change: "Objek Terdaftar", trend: "up", icon: Building2, color: "text-primary", bg: "bg-primary/5" },
-    { label: "Jumlah Sudah Membayar", value: `${data?.stats.paidCount ?? 0} Transaksi`, change: "Pembayaran Lunas", trend: "up", icon: ShieldCheck, color: "text-emerald-500", bg: "bg-emerald-50/50" },
-    { label: "Tunggakan / Utang Pajak", value: `${data?.stats.unpaidCount ?? 0} Tunggakan`, change: "Perlu Tindak Lanjut", trend: "down", icon: ShieldAlert, color: "text-amber-500", bg: "bg-amber-50/50" },
+    { label: "1. Total Wajib Pajak", value: `${data?.stats.userCount ?? 0} WP`, subtext: "Entitas Terdaftar", icon: Users, color: "text-blue-600", bg: "bg-blue-50/50", trend: "Database WP" },
+    { label: "2. Total Objek Pajak", value: `${data?.stats.taxObjectCount ?? 0} Aset`, subtext: "Node Objek Terdaftar", icon: Building2, color: "text-primary", bg: "bg-primary/5", trend: "Bumi & Bangunan" },
+    { label: "3. Total SPPT Terbit", value: `${data?.stats.spptCount ?? 0} Berkas`, subtext: "Digitalisasi Dokumen", icon: FileText, color: "text-indigo-600", bg: "bg-indigo-50/50", trend: "Tahun Pajak 2026" },
+    { label: "4. Total Pajak Terutang", value: formatCurrency(data?.stats.totalPajakTerutang ?? 0), subtext: "Ketetapan Fiskal", icon: BarChart3, color: "text-purple-600", bg: "bg-purple-50/50", trend: "Target Realisasi" },
+    { label: "5. Total Pembayaran Masuk", value: formatCurrency(data?.stats.totalPembayaranMasuk ?? 0), subtext: "Kas Daerah Kota Medan", icon: CreditCard, color: "text-emerald-600", bg: "bg-emerald-50/50", trend: "Realisasi Pajak" },
+    { label: "6. Total Tunggakan Pajak", value: formatCurrency(data?.stats.totalTunggakanPajak ?? 0), subtext: "Piutang Fiskal Daerah", icon: ShieldAlert, color: "text-rose-600", bg: "bg-rose-50/50", trend: "Menunggu Tindak Lanjut" },
+    { label: "7. Wajib Pajak Aktif", value: `${data?.stats.activeWpCount ?? 0} User`, subtext: "Akses Portal Aktif", icon: ShieldCheck, color: "text-teal-600", bg: "bg-teal-50/50", trend: "Entitas Aktif" },
+    { label: "8. Kepatuhan Pembayaran", value: `${data?.stats.kepatuhanRate ?? 0}%`, subtext: "Kepatuhan Real-time", icon: Percent, color: "text-amber-600", bg: "bg-amber-50/50", trend: "Rasio Kepatuhan" },
   ];
 
-  const chartData = (data?.monthlyStats || []).map(m => ({
+  // 1. Monthly Chart Data
+  const monthlyChartData = (data?.monthlyStats || []).map(m => ({
     label: MONTHS[m.month],
     value: m.revenue
+  }));
+
+  // 2. Yearly Chart Data (Simulated for Comparison)
+  const yearlyChartData = [
+    { label: "2024 (PAD)", value: 3800000000 },
+    { label: "2025 (PAD)", value: 5200000000 },
+    { label: "2026 (PAD)", value: data?.stats.totalPembayaranMasuk ?? 0 }
+  ];
+
+  // 3. Comparison Chart Data: Realisasi vs Tunggakan
+  const comparisonChartData = [
+    { label: "Realisasi (PAID)", value: data?.stats.totalPembayaranMasuk ?? 0 },
+    { label: "Tunggakan (PIUTANG)", value: data?.stats.totalTunggakanPajak ?? 0 }
+  ];
+
+  // 4. Growth Chart Data (Percentage growth comparison across months)
+  let accumulated = 0;
+  const growthChartData = (data?.monthlyStats || []).map((m, i) => {
+    accumulated += m.revenue;
+    return {
+      label: MONTHS[m.month],
+      value: accumulated
+    };
+  });
+
+  // 5. Category Chart Data (Counts of objects)
+  const categoryChartData = Object.entries(data?.objCategoryCounts || {}).map(([key, val]) => ({
+    label: key,
+    value: val
   }));
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000 pb-20 selection:bg-primary/20 text-left">
       
       {/* ── Dashboard Hero ── */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-         <div className="lg:col-span-8 relative bg-white border border-zinc-100 rounded-[5rem] p-14 md:p-24 overflow-hidden group shadow-2xl shadow-primary/5 flex flex-col justify-center min-h-[500px]">
-            <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] group-hover:scale-110 transition-transform duration-1000" />
-            <div className="relative z-10 space-y-10">
-               <div className="flex items-center gap-4">
-                  <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.5em] italic">Selamat Datang, {session.user?.name ?? "Admin"}</p>
-               </div>
-               <div className="space-y-6">
-                  <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter leading-[0.85] uppercase text-foreground">Sistem <br /> Monitoring <span className="text-primary italic">Fiskal.</span></h1>
-                  <p className="text-xl text-muted-foreground font-medium max-w-2xl leading-relaxed italic border-l-4 border-primary/10 pl-8">
-                     Visualisasi data real-time, manajemen pendapatan, dan audit terpusat Pemerintah Kota Medan untuk transparansi fiskal maksimal.
-                  </p>
-               </div>
-               <div className="flex flex-wrap gap-4 pt-6">
-                  <Link href="/dashboard/admin/stats">
-                     <Button variant="primary" className="btn-premium px-12 h-18 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/30 group">
-                       Buka Command Center <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-2 transition-transform" />
-                     </Button>
-                  </Link>
-                  <Button variant="outline" className="px-10 h-18 rounded-[2rem] bg-zinc-50 border-zinc-100 font-black uppercase text-[10px] tracking-widest hover:bg-white flex items-center gap-3">Live Update <Zap className="w-4 h-4 text-primary" /></Button>
-               </div>
+      <section className="relative bg-white border border-zinc-100 rounded-[5rem] p-14 md:p-24 overflow-hidden group shadow-2xl shadow-primary/5 min-h-[420px] flex flex-col justify-center">
+         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] group-hover:scale-110 transition-transform duration-1000" />
+         <div className="relative z-10 space-y-8">
+            <div className="flex items-center gap-4">
+               <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
+               <p className="text-[10px] font-black text-primary uppercase tracking-[0.5em] italic">Selamat Datang, {session.user?.name ?? "Admin"}</p>
+            </div>
+            <div className="space-y-4">
+               <h1 className="text-5xl md:text-7xl font-black italic tracking-tighter leading-[0.85] uppercase text-foreground">Command Center <br/> PBB-P2 <span className="text-primary italic">Medan.</span></h1>
+               <p className="text-lg text-muted-foreground font-medium max-w-2xl leading-relaxed italic border-l-4 border-primary/10 pl-8">
+                  Pusat kendali monitoring penerimaan Pajak Bumi dan Bangunan Perdesaan dan Perkotaan (PBB-P2) Kota Medan secara real-time dan terintegrasi.
+               </p>
+            </div>
+            <div className="flex flex-wrap gap-4 pt-4">
+               <Link href="/dashboard/admin/stats">
+                  <Button variant="primary" className="btn-premium px-12 h-18 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/30 group">
+                    Visualisasi Statistik <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                  </Button>
+               </Link>
+               <Button onClick={() => window.location.reload()} variant="outline" className="px-10 h-18 rounded-[2rem] bg-zinc-50 border-zinc-100 font-black uppercase text-[10px] tracking-widest hover:bg-white flex items-center gap-3">Refresh Data <Zap className="w-4 h-4 text-primary" /></Button>
             </div>
          </div>
+      </section>
 
-         {/* ── Mini Stats Grid ── */}
-         <div className="lg:col-span-4 grid grid-cols-1 gap-6">
+      {/* ── 8 KPI Cards Grid ── */}
+      <section className="space-y-6">
+         <div className="flex items-center gap-4 pl-4">
+            <div className="w-12 h-1 bg-primary rounded-full animate-pulse" />
+            <h2 className="text-xl font-black italic tracking-tighter uppercase text-zinc-800">Ringkasan Eksekutif Pajak Daerah</h2>
+         </div>
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {kpis.map((stat, i) => (
-               <Card key={i} padding="lg" variant="elevated" className={cn("bg-white border-zinc-50 group hover:scale-[1.05] hover:shadow-2xl hover:shadow-primary/10 transition-all flex items-center justify-between shadow-xl shadow-primary/5 rounded-[3rem] relative overflow-hidden")}>
+               <Card key={i} padding="lg" variant="elevated" className="bg-white border-zinc-50 group hover:scale-[1.03] hover:shadow-2xl hover:shadow-primary/5 transition-all flex items-center justify-between shadow-xl shadow-primary/5 rounded-[3rem] relative overflow-hidden">
                   <div className={cn("absolute inset-0 opacity-[0.03] transition-opacity group-hover:opacity-[0.06] -z-0", stat.bg)} />
-                  <div className="space-y-3 relative z-10">
+                  <div className="space-y-2 relative z-10">
                      <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest italic">{stat.label}</p>
-                     <h4 className="text-2xl font-black italic tracking-tighter text-foreground italic uppercase">{stat.value}</h4>
-                     <span className={cn("px-4 py-1 text-[9px] font-black rounded-full italic border shadow-sm leading-none", 
-                        stat.trend === "up" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
-                     )}>{stat.change}</span>
+                     <h4 className="text-xl font-black italic tracking-tighter text-foreground uppercase truncate max-w-[200px]">{stat.value}</h4>
+                     <p className="text-[10px] font-medium text-zinc-500">{stat.subtext}</p>
+                     <span className="inline-block mt-2 px-3 py-0.5 text-[8px] font-black rounded-full bg-zinc-50 text-zinc-600 border border-zinc-150 uppercase tracking-widest italic">{stat.trend}</span>
                   </div>
                   <div className={`w-14 h-14 rounded-2xl bg-zinc-50 flex items-center justify-center ${stat.color} shadow-inner group-hover:rotate-12 transition-transform relative z-10 border border-zinc-100`}>
-                     <stat.icon className="w-7 h-7" />
+                     <stat.icon className="w-6 h-6" />
                   </div>
                </Card>
             ))}
          </div>
       </section>
 
-      {/* ── Revenue Intelligence Chart ── */}
-      <section className="animate-in fade-in slide-in-from-bottom-6 duration-1000">
-         <Card padding="lg" variant="elevated" className="bg-white border-zinc-100 rounded-[5rem] shadow-2xl shadow-primary/5 p-16 md:p-24 relative overflow-hidden group">
+      {/* ── Revenue Intelligence Multi-Chart Section ── */}
+      <section className="space-y-6">
+         <Card padding="lg" variant="elevated" className="bg-white border-zinc-100 rounded-[5rem] shadow-2xl shadow-primary/5 p-12 md:p-20 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[80px] -z-10 group-hover:scale-110 transition-transform duration-[2000ms]" />
-            <PremiumChart 
-               subtitle="Statistik Pajak Tahunan"
-               title="Penerimaan Pajak Bulanan"
-               data={chartData.length > 0 ? chartData : [
-                  { label: "Jan", value: 1250000000 },
-                  { label: "Feb", value: 1450000000 },
-                  { label: "Mar", value: 1100000000 },
-                  { label: "Apr", value: 1800000000 },
-                  { label: "Mei", value: 2100000000 },
-                  { label: "Jun", value: 850000000 },
-                  { label: "Jul", value: 450000000 },
-               ]}
-            />
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-100 pb-8 mb-10 gap-6">
+               <div className="space-y-1">
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] italic leading-none">Visualisasi Grafik Fiskal</p>
+                  <h3 className="text-3xl font-black italic tracking-tighter uppercase italic leading-none">Analisis Kinerja Penerimaan</h3>
+               </div>
+               
+               {/* Chart Selector Tabs */}
+               <div className="flex flex-wrap gap-2 p-1.5 bg-zinc-50 rounded-2xl border border-zinc-150 shadow-inner">
+                  {[
+                     { id: "monthly", label: "Bulanan" },
+                     { id: "yearly", label: "Tahunan" },
+                     { id: "comparison", label: "Realisasi vs Piutang" },
+                     { id: "growth", label: "Kumulatif" },
+                     { id: "category", label: "Kategori Pajak" }
+                  ].map((tab) => (
+                     <button
+                        key={tab.id}
+                        onClick={() => setChartTab(tab.id as any)}
+                        className={cn(
+                           "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                           chartTab === tab.id
+                              ? "bg-white text-primary shadow-sm border border-primary/10"
+                              : "text-zinc-500 hover:text-zinc-900"
+                        )}
+                     >
+                        {tab.label}
+                     </button>
+                  ))}
+               </div>
+            </div>
+
+            {/* Render Selected Chart */}
+            {chartTab === "monthly" && (
+               <PremiumChart 
+                  subtitle="Akumulasi Bulanan 2026"
+                  title="Pembayaran Pajak Bulanan"
+                  data={monthlyChartData.length > 0 ? monthlyChartData : [
+                     { label: "Jan", value: 0 },
+                     { label: "Feb", value: 0 }
+                  ]}
+               />
+            )}
+            
+            {chartTab === "yearly" && (
+               <PremiumChart 
+                  subtitle="PAD Perbandingan Tahunan"
+                  title="Pembayaran Pajak Tahunan (YoY)"
+                  data={yearlyChartData}
+               />
+            )}
+
+            {chartTab === "comparison" && (
+               <PremiumChart 
+                  subtitle="Realisasi Kas vs Tunggakan Pajak"
+                  title="Perbandingan Realisasi & Tunggakan"
+                  data={comparisonChartData}
+               />
+            )}
+
+            {chartTab === "growth" && (
+               <PremiumChart 
+                  subtitle="Grafik Pertumbuhan Penerimaan Kumulatif"
+                  title="Pertumbuhan Penerimaan Pajak (YTD)"
+                  data={growthChartData}
+               />
+            )}
+
+            {chartTab === "category" && (
+               <PremiumChart 
+                  subtitle="Distribusi Jumlah Objek Pajak"
+                  title="Objek Pajak Berdasarkan Kategori"
+                  data={categoryChartData}
+               />
+            )}
          </Card>
       </section>
 
       {/* ── Dokumentasi Pengajuan ── */}
-      <section className="animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300">
-         <div className="flex items-center gap-4 mb-10 pl-4">
-            <div className="w-12 h-1 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
-            <h2 className="text-2xl font-black italic tracking-tighter uppercase italic">Dokumentasi <span className="text-primary">Pengajuan.</span></h2>
+      <section className="space-y-6">
+         <div className="flex items-center gap-4 pl-4">
+            <div className="w-12 h-1 bg-primary rounded-full animate-pulse" />
+            <h2 className="text-xl font-black italic tracking-tighter uppercase text-zinc-800">Dokumentasi Pengajuan Dokumen</h2>
          </div>
          <Card padding="none" className="bg-white border-zinc-100 rounded-[3rem] overflow-hidden shadow-2xl shadow-primary/[0.02]">
             <div className="overflow-x-auto">
@@ -195,18 +300,19 @@ export const AdminDashboard = ({ session }: { session: Session }) => {
                               <td className="px-8 py-6">
                                  <span className={cn(
                                     "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
-                                    sub.status === "APPROVED" || sub.status === "RESOLVED"
+                                    sub.status === "APPROVED" || sub.status === "RESOLVED" || sub.status === "Disetujui"
                                        ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                                       : sub.status === "REJECTED" || sub.status === "CLOSED"
+                                       : sub.status === "REJECTED" || sub.status === "CLOSED" || sub.status === "Ditolak"
                                        ? "bg-red-50 text-red-600 border-red-100"
                                        : "bg-amber-50 text-amber-600 border-amber-100"
                                  )}>
-                                    {sub.status}
+                                    {sub.status === "PENDING" ? "Menunggu Verifikasi" : sub.status === "IN_PROGRESS" ? "Diproses" : sub.status}
                                  </span>
                               </td>
                               <td className="px-8 py-6 text-center">
                                  <Link href={
                                     sub.type === "Riset Mahasiswa" ? "/dashboard/admin/research" :
+                                    sub.type === "Keberatan Pajak" || sub.type === "Perubahan Data" ? "/dashboard/admin/submissions" :
                                     sub.type === "Layanan PPID" ? "/dashboard/ppid" : "/dashboard/pengaduan"
                                  }>
                                     <Button variant="ghost" size="sm" className="font-black uppercase text-[10px] tracking-widest text-primary italic leading-none hover:bg-primary/5 px-4 py-2 rounded-xl">
@@ -227,7 +333,7 @@ export const AdminDashboard = ({ session }: { session: Session }) => {
          </Card>
       </section>
 
-      {/* ── Activity & Intelligence Hub ── */}
+      {/* ── Activity & System Hub ── */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-10">
          <div className="lg:col-span-8 group">
             <Card padding="none" variant="elevated" className="bg-white border-zinc-100 rounded-[5rem] overflow-hidden shadow-2xl shadow-primary/5 min-h-[600px] flex flex-col p-12 md:p-20 relative">

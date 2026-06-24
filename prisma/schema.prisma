@@ -46,6 +46,9 @@ model User {
   news             News[]
   announcements    Announcement[]
   notifications    Notification[]
+  sppts            Sppt[]
+  taxSubmissions   TaxSubmission[]
+  assessments      TaxAssessment[]
 }
 
 // ... existing models ...
@@ -118,7 +121,10 @@ model TaxObject {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  payments Payment[]
+  payments    Payment[]
+  sppts       Sppt[]
+  locations   ObjectTaxLocation?
+  assessments TaxAssessment[]
 }
 
 model Payment {
@@ -239,4 +245,94 @@ model Complaint {
   user         User      @relation(fields: [userId], references: [id])
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+// ─── SPPT Digital ────────────────────────────────────────────────────────────
+model Sppt {
+  id            String    @id @default(cuid())
+  spptNumber    String    @unique
+  taxPeriod     String
+  njop          Decimal   @db.Decimal(20, 2)
+  njoptkp       Decimal   @db.Decimal(20, 2)
+  taxObjectVal  Decimal   @db.Decimal(20, 2) // Pajak Terutang
+  isDownloaded  Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  taxObjectId   String
+  taxObject     TaxObject @relation(fields: [taxObjectId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Dokumentasi Pengajuan ───────────────────────────────────────────────────
+model TaxSubmission {
+  id             String   @id @default(cuid())
+  ticketNumber   String   @unique
+  type           String   // KEBERATAN, PERUBAHAN
+  title          String
+  description    String   @db.Text
+  documentUrl    String?
+  status         String   @default("PENDING") // PENDING, IN_PROGRESS, APPROVED, REJECTED
+  reviewNotes    String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Modul GIS & Geo-analytics Baru ───────────────────────────────────────────
+model ObjectTaxLocation {
+  id          String    @id @default(cuid())
+  objectTaxId String    @unique
+  objectTax   TaxObject @relation(fields: [objectTaxId], references: [id], onDelete: Cascade)
+  latitude    Float
+  longitude   Float
+  polygonData String    @db.Text // JSON string representing polygon coordinates
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model LandValueZone {
+  id            String   @id @default(cuid())
+  zoneCode      String   @unique
+  zoneName      String
+  polygonData   String   @db.Text // JSON string representing polygon coordinates
+  valuePerMeter Decimal  @db.Decimal(20, 2)
+  district      String
+  village       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PropertyMarket {
+  id           String   @id @default(cuid())
+  propertyType String   // RUMAH, RUKO, TANAH, etc.
+  address      String
+  district     String
+  village      String
+  marketPrice  Decimal  @db.Decimal(20, 2)
+  landArea     Float
+  buildingArea Float
+  latitude     Float
+  longitude    Float
+  source       String   // e.g. OLX, Rumah123, Survey Lapangan
+  recordedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TaxAssessment {
+  id               String    @id @default(cuid())
+  objectTaxId      String
+  objectTax        TaxObject @relation(fields: [objectTaxId], references: [id], onDelete: Cascade)
+  oldNJOP          Decimal   @db.Decimal(20, 2)
+  newNJOP          Decimal   @db.Decimal(20, 2)
+  assessmentReason String    @db.Text
+  assessorId       String
+  assessor         User      @relation(fields: [assessorId], references: [id])
+  assessmentDate   DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }

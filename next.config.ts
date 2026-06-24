@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  turbopack: {
+    // Explicitly set the project root so Turbopack doesn't pick up the
+    // parent directory's package-lock.json as the workspace root.
+    root: __dirname,
+  },
 };
 
 export default nextConfig;

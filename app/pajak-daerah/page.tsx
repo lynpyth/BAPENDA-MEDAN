@@ -3,7 +3,7 @@
 import PublicLayout from "@/components/PublicLayout";
 import { 
   Building2, Map, CreditCard, LayoutGrid, 
-  Car, Droplets, Tv, ArrowRight, Star
+  Car, Droplets, Tv, ArrowRight, Star, Zap
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -13,13 +13,20 @@ import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 
 const taxTypes = [
-  { id: "pbb", title: "Pajak Bumi & Bangunan", icon: Building2, desc: "Pajak atas tanah dan/atau bangunan yang dimiliki, dikuasai, dan/atau dimanfaatkan oleh orang pribadi atau badan.", rate: "0.1% - 0.2%", period: "Tahunan", canSimulate: true },
-  { id: "bphtb", title: "BPHTB", icon: Map, desc: "Bea perolehan hak atas tanah dan bangunan karena adanya perbuatan atau peristiwa hukum.", rate: "5% (NPOP-NPOPTKP)", period: "Per Transaksi", canSimulate: true },
-  { id: "reklame", title: "Pajak Reklame", icon: LayoutGrid, desc: "Pajak atas penyelenggaraan reklame baik permanen maupun temporer di wilayah Kota Medan.", rate: "Bervariasi (Luas & Lokasi)", period: "Tahunan", canSimulate: false },
-  { id: "restoran", title: "Pajak Restoran", icon: CreditCard, desc: "Pajak atas pelayanan yang disediakan oleh restoran (makanan/minuman) kepada konsumen.", rate: "10% dari Omzet", period: "Bulanan", canSimulate: true },
-  { id: "parkir", title: "Pajak Parkir", icon: Car, desc: "Pajak atas penyelenggaraan tempat parkir di luar badan jalan.", rate: "20% - 30% dari Omzet", period: "Bulanan", canSimulate: false },
-  { id: "air-tanah", title: "Pajak Air Tanah", icon: Droplets, desc: "Pajak atas pengambilan dan/atau pemanfaatan air tanah sesuai volume.", rate: "20% dari NPA", period: "Bulanan", canSimulate: false },
-  { id: "hiburan", title: "Pajak Hiburan", icon: Tv, desc: "Pajak atas penyelenggaraan hiburan termasuk tontonan film, sirkus, bioskop, dll.", rate: "15% - 35% dari Omzet", period: "Bulanan", canSimulate: false },
+  { id: "pkb", title: "PKB (Kendaraan Bermotor)", icon: Car, desc: "Pajak atas kepemilikan dan/atau penguasaan kendaraan bermotor di wilayah Kota Medan.", rate: "1.5% - 2%", period: "Tahunan", canSimulate: true },
+  { id: "bbn-kb", title: "BBN-KB (Bea Balik Nama)", icon: Car, desc: "Bea balik nama atas penyerahan hak kepemilikan kendaraan bermotor.", rate: "10%", period: "Per Transaksi", canSimulate: false },
+  { id: "pbb-kb", title: "PBB-KB (Bahan Bakar)", icon: Droplets, desc: "Pajak atas penggunaan bahan bakar kendaraan bermotor.", rate: "5% - 10%", period: "Bulanan", canSimulate: false },
+  { id: "p-rokok", title: "Pajak Rokok", icon: Tv, desc: "Pajak atas konsumsi rokok yang dipungut bersamaan dengan cukai rokok.", rate: "10% dari Cukai", period: "Per Transaksi", canSimulate: false },
+  { id: "p-reklame", title: "Pajak Reklame", icon: LayoutGrid, desc: "Pajak atas penyelenggaraan reklame (papan, spanduk, billboard, dll) secara komersial.", rate: "25% dari NSR", period: "Tahunan", canSimulate: true },
+  { id: "pat", title: "PAT (Pajak Air Tanah)", icon: Droplets, desc: "Pajak atas pengambilan dan/atau pemanfaatan air tanah.", rate: "20% dari NPA", period: "Bulanan", canSimulate: false },
+  { id: "pbb-p2", title: "PBB-P2 (Bumi & Bangunan)", icon: Building2, desc: "Pajak atas bumi dan/atau bangunan yang dimiliki, dikuasai, dan/atau dimanfaatkan oleh orang pribadi atau badan.", rate: "0.1% - 0.2%", period: "Tahunan", canSimulate: true },
+  { id: "bphtb", title: "BPHTB (Tanah & Bangunan)", icon: Map, desc: "Bea perolehan hak atas tanah dan bangunan karena adanya perbuatan atau peristiwa hukum.", rate: "5% (NPOP-NPOPTKP)", period: "Per Transaksi", canSimulate: true },
+  { id: "pab", title: "PAB (Alat Berat)", icon: Car, desc: "Pajak atas kepemilikan dan/atau penguasaan alat berat.", rate: "0.2% dari NJAB", period: "Tahunan", canSimulate: false },
+  { id: "pbjt-hotel", title: "PBJT Jasa Perhotelan", icon: Building2, desc: "Pajak atas pelayanan yang disediakan oleh hotel dan tempat penginapan sejenis.", rate: "10%", period: "Bulanan", canSimulate: true },
+  { id: "pbjt-mamin", title: "PBJT Makanan & Minuman", icon: CreditCard, desc: "Pajak atas penjualan makanan dan/atau minuman oleh restoran, kafe, warung, dll.", rate: "10%", period: "Bulanan", canSimulate: true },
+  { id: "pbjt-hiburan", title: "PBJT Kesenian & Hiburan", icon: Tv, desc: "Pajak atas penyelenggaraan jasa kesenian, olahraga, dan hiburan komersial.", rate: "10% - 40%", period: "Bulanan", canSimulate: false },
+  { id: "pbjt-listrik", title: "PBJT Tenaga Listrik", icon: Zap, desc: "Pajak atas konsumsi tenaga listrik baik yang dihasilkan sendiri maupun dari sumber lain.", rate: "3% - 10%", period: "Bulanan", canSimulate: false },
+  { id: "pbjt-parkir", title: "PBJT Jasa Parkir", icon: Car, desc: "Pajak atas penyelenggaraan tempat parkir di luar badan jalan.", rate: "10%", period: "Bulanan", canSimulate: true },
 ];
 
 export default function PajakDaerah() {

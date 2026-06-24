@@ -4,13 +4,31 @@ import { useEffect, useState, useCallback } from "react";
 import { 
   Users, Search, ShieldAlert, Star, 
   Activity, ArrowRight, Filter, ShieldCheck, 
-  Trash2, Plus, X, Loader2, Eye, EyeOff, Key, Mail, User as UserIcon, Edit2, CheckCircle2, AlertTriangle, Phone
+  Trash2, Plus, X, Loader2, Eye, Mail, User as UserIcon, Edit2, CheckCircle2, AlertTriangle, Phone, Lock, MapPin, Calendar, Clock, CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/lib/hooks/use-toast";
 import { cn } from "@/lib/utils";
+
+interface Payment {
+  id: string;
+  amount: number;
+  status: string;
+  taxPeriod: string;
+  createdAt: string;
+  taxObject: { name: string; nop: string };
+}
+
+interface AuditLog {
+  id: string;
+  action: string;
+  table: string;
+  createdAt: string;
+  oldValue: any;
+  newValue: any;
+}
 
 interface User {
   id: string;
@@ -23,6 +41,8 @@ interface User {
   isActive: boolean;
   createdAt: string;
   _count: { taxObjects: number; payments: number };
+  payments: Payment[];
+  auditLogs: AuditLog[];
 }
 
 const ROLES = ["USER", "OFFICER", "ADMIN", "MAHASISWA"] as const;
@@ -33,16 +53,28 @@ const roleBadge: Record<string, string> = {
   OFFICER: "bg-blue-50 text-blue-600 border-blue-100 shadow-blue-500/5",
   USER: "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-500/5",
   MAHASISWA: "bg-amber-50 text-amber-600 border-amber-100 shadow-amber-500/5",
-  DEVELOPER: "bg-amber-50 text-amber-600 border-amber-100 shadow-amber-500/5",
 };
 
 const roleLabel: Record<string, string> = {
   ADMIN: "Super Admin",
-  OFFICER: "Field Officer",
+  OFFICER: "Petugas Pajak",
   USER: "Wajib Pajak",
   MAHASISWA: "Civitas Research",
-  DEVELOPER: "System Dev",
 };
+
+const MEDAN_REGIONS = [
+  "Medan Baru",
+  "Medan Petisah",
+  "Medan Sunggal",
+  "Medan Helvetia",
+  "Medan Johor",
+  "Medan Area",
+  "Medan Polonia"
+];
+
+function formatCurrency(val: number) {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(val);
+}
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
@@ -51,12 +83,18 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("ALL");
   const [filterStatus, setFilterStatus] = useState("ALL"); // ALL, ACTIVE, INACTIVE
+  const [filterPayment, setFilterPayment] = useState("ALL"); // ALL, LUNAS, MENUNGGAK
+  const [filterRegion, setFilterRegion] = useState("ALL"); // ALL, or Kecamatan
+  
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const [newUser, setNewUser] = useState({
     name: "", email: "", password: "", role: "USER" as UserRole, nik: "", phone: "", address: "", isActive: true
@@ -80,6 +118,11 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, [fetchUsers]);
 
+  const validateNIK = (nik: string) => {
+    if (!nik) return true; // optional in DB
+    return /^\d{16}$/.test(nik);
+  };
+
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     setUpdatingId(id);
     const newStatus = !currentStatus;
@@ -92,6 +135,9 @@ export default function AdminUsersPage() {
       if (!res.ok) throw new Error();
       
       setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, isActive: newStatus } : u)));
+      if (selectedUser?.id === id) {
+        setSelectedUser(prev => prev ? { ...prev, isActive: newStatus } : null);
+      }
       toast("Status Diperbarui", `User sekarang ${newStatus ? 'Aktif' : 'Nonaktif'}`, "success");
     } catch {
       toast("Kesalahan Sistem", "Gagal memperbarui status aktif user.", "error");
@@ -117,6 +163,10 @@ export default function AdminUsersPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (newUser.nik && !validateNIK(newUser.nik)) {
+      toast("NIK Tidak Valid", "Nomor Induk Kependudukan (NIK) harus terdiri dari 16 digit angka.", "error");
+      return;
+    }
     setCreateLoading(true);
     try {
         const res = await fetch("/api/users", {
@@ -124,13 +174,16 @@ export default function AdminUsersPage() {
            headers: { "Content-Type": "application/json" },
            body: JSON.stringify(newUser)
         });
-        if (!res.ok) throw new Error();
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || "Gagal");
+        }
         setShowCreateModal(false);
         setNewUser({ name: "", email: "", password: "", role: "USER", nik: "", phone: "", address: "", isActive: true });
         fetchUsers();
         toast("Berhasil", "Node identitas baru telah didaftarkan dalam sistem.", "success");
-    } catch {
-        toast("Error", "Gagal registrasi identitas baru.", "error");
+    } catch (err: any) {
+        toast("Error", err.message || "Gagal registrasi identitas baru.", "error");
     } finally {
         setCreateLoading(false);
     }
@@ -154,6 +207,10 @@ export default function AdminUsersPage() {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
+    if (editForm.nik && !validateNIK(editForm.nik)) {
+      toast("NIK Tidak Valid", "Nomor Induk Kependudukan (NIK) harus terdiri dari 16 digit angka.", "error");
+      return;
+    }
     setEditLoading(true);
     try {
       const res = await fetch("/api/users", {
@@ -176,20 +233,42 @@ export default function AdminUsersPage() {
     }
   };
 
+  const openDetailModal = (user: User) => {
+    setSelectedUser(user);
+    setShowDetailModal(true);
+  };
+
+  const getUserPaymentStatus = (user: User) => {
+    if (!user.payments || user.payments.length === 0) return "LUNAS";
+    const hasArrears = user.payments.some(p => p.status === "PENDING" || p.status === "EXPIRED");
+    return hasArrears ? "MENUNGGAK" : "LUNAS";
+  };
+
   const filtered = users.filter((u) => {
     const matchSearch =
       u.name?.toLowerCase().includes(search.toLowerCase()) ||
       u.email?.toLowerCase().includes(search.toLowerCase()) ||
       u.nik?.includes(search);
     const matchRole = filterRole === "ALL" || u.role === filterRole;
+    
+    // Status Filter (Active / Inactive)
     const matchStatus = filterStatus === "ALL" || 
       (filterStatus === "ACTIVE" && u.isActive) ||
       (filterStatus === "INACTIVE" && !u.isActive);
-    return matchSearch && matchRole && matchStatus;
+
+    // Payment Status Filter (Lunas / Menunggak)
+    const pStatus = getUserPaymentStatus(u);
+    const matchPayment = filterPayment === "ALL" || pStatus === filterPayment;
+
+    // Region Filter (Address containment)
+    const matchRegion = filterRegion === "ALL" || 
+      (u.address && u.address.toLowerCase().includes(filterRegion.toLowerCase()));
+
+    return matchSearch && matchRole && matchStatus && matchPayment && matchRegion;
   });
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-20 selection:bg-primary/20 text-left w-full">
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-20 w-full text-left">
       
       {/* ── Page Header ── */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
@@ -202,7 +281,7 @@ export default function AdminUsersPage() {
             Manajemen <span className="text-primary italic">User.</span>
           </h1>
           <p className="text-xl text-muted-foreground font-medium max-w-xl leading-relaxed italic border-l-4 border-primary/10 pl-8 ml-2">
-            &quot;Sistem manajemen otoritas pusat (IAM) untuk mengelola data wajib pajak, petugas lapangan, dan akses administratif Bapenda Medan.&quot;
+            &quot;Sistem pengelolaan wajib pajak dan petugas PBB-P2 dengan monitoring pembayaran serta validasi kependudukan terpadu.&quot;
           </p>
         </div>
         <div className="flex items-center gap-6">
@@ -223,38 +302,64 @@ export default function AdminUsersPage() {
       </div>
 
       {/* ── Search & Filter ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 pt-6">
-        <div className="lg:col-span-3 relative group">
-          <Search className="absolute left-8 top-1/2 -translate-y-1/2 w-6 h-6 text-zinc-300 group-focus-within:text-primary transition-colors" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari Identitas, Email, atau NIK Pengguna..."
-            className="w-full pl-22 pr-10 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.04] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-lg tracking-tight italic"
-          />
-        </div>
-        <div className="relative group lg:col-span-1.5">
-           <Filter className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300" />
-           <select
-             value={filterRole}
-             onChange={(e) => setFilterRole(e.target.value)}
-             className="w-full pl-16 pr-6 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.04] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
-           >
-             <option value="ALL">Semua Unit</option>
-             {ROLES.map(r => <option key={r} value={r}>{roleLabel[r]}</option>)}
-           </select>
-        </div>
-        <div className="relative group lg:col-span-1.5">
-           <Filter className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300" />
-           <select
-             value={filterStatus}
-             onChange={(e) => setFilterStatus(e.target.value)}
-             className="w-full pl-16 pr-6 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.04] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
-           >
-             <option value="ALL">Semua Status</option>
-             <option value="ACTIVE">Aktif</option>
-             <option value="INACTIVE">Nonaktif</option>
-           </select>
+      <div className="flex flex-col gap-6 pt-6 bg-zinc-50/50 p-8 rounded-[3rem] border border-zinc-100">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Quick Search */}
+          <div className="lg:col-span-4 relative group">
+            <Search className="absolute left-8 top-1/2 -translate-y-1/2 w-6 h-6 text-zinc-300 group-focus-within:text-primary transition-colors" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari Identitas, Email, atau NIK Pengguna..."
+              className="w-full pl-22 pr-10 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-bold text-sm tracking-tight italic"
+            />
+          </div>
+          {/* Role Filter */}
+          <div className="relative group lg:col-span-2">
+             <select
+               value={filterRole}
+               onChange={(e) => setFilterRole(e.target.value)}
+               className="w-full px-8 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
+             >
+               <option value="ALL">Semua Role</option>
+               {ROLES.map(r => <option key={r} value={r}>{roleLabel[r]}</option>)}
+             </select>
+          </div>
+          {/* Status Filter */}
+          <div className="relative group lg:col-span-2">
+             <select
+               value={filterStatus}
+               onChange={(e) => setFilterStatus(e.target.value)}
+               className="w-full px-8 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
+             >
+               <option value="ALL">Semua Status Akun</option>
+               <option value="ACTIVE">Aktif</option>
+               <option value="INACTIVE">Nonaktif</option>
+             </select>
+          </div>
+          {/* Payment Status Filter */}
+          <div className="relative group lg:col-span-2">
+             <select
+               value={filterPayment}
+               onChange={(e) => setFilterPayment(e.target.value)}
+               className="w-full px-8 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
+             >
+               <option value="ALL">Semua Status Bayar</option>
+               <option value="LUNAS">Lunas Pajak</option>
+               <option value="MENUNGGAK">Menunggak / Piutang</option>
+             </select>
+          </div>
+          {/* Region Filter */}
+          <div className="relative group lg:col-span-2">
+             <select
+               value={filterRegion}
+               onChange={(e) => setFilterRegion(e.target.value)}
+               className="w-full px-8 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
+             >
+               <option value="ALL">Semua Wilayah</option>
+               {MEDAN_REGIONS.map(reg => <option key={reg} value={reg}>{reg}</option>)}
+             </select>
+          </div>
         </div>
       </div>
 
@@ -264,11 +369,11 @@ export default function AdminUsersPage() {
            <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
                  <tr className="bg-zinc-50 border-b border-zinc-100">
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Node ID / User</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Kontak</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Nama / Kode Node</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Alamat / Kontak</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">NIK</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Role</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Aset / Transaksi</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Status Bayar</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400">Status</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-zinc-400 text-center">Aksi</th>
                  </tr>
@@ -283,68 +388,89 @@ export default function AdminUsersPage() {
                        <td colSpan={7} className="px-8 py-16 text-center text-zinc-300 italic font-bold">Void List — Tidak ada user ditemukan.</td>
                     </tr>
                  ) : (
-                    filtered.map((u) => (
-                       <tr key={u.id} className="hover:bg-zinc-50/30 transition-colors">
-                          <td className="px-8 py-6">
-                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-primary/5 text-primary rounded-xl flex items-center justify-center font-black text-lg italic">
-                                   {u.name?.[0] ?? "U"}
-                                </div>
-                                <div>
-                                   <p className="text-xs font-black uppercase tracking-tight text-zinc-900">{u.name}</p>
-                                   <span className="text-[9px] font-black text-zinc-400 uppercase italic">NODE: {u.id.slice(-8).toUpperCase()}</span>
-                                </div>
-                             </div>
-                          </td>
-                          <td className="px-8 py-6">
-                             <p className="text-xs font-bold text-zinc-700">{u.email}</p>
-                             <p className="text-[10px] text-zinc-400 font-bold">{u.phone || "—"}</p>
-                          </td>
-                          <td className="px-8 py-6 text-xs text-zinc-500 font-bold">{u.nik || "—"}</td>
-                          <td className="px-8 py-6">
-                             <span className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border italic leading-none shadow-sm", roleBadge[u.role])}>
-                                {roleLabel[u.role] ?? u.role}
-                             </span>
-                          </td>
-                          <td className="px-8 py-6 text-xs font-bold text-zinc-500">
-                             {u._count.taxObjects} Aset • {u._count.payments} Transaksi
-                          </td>
-                          <td className="px-8 py-6">
-                             <button
-                               onClick={() => handleToggleActive(u.id, u.isActive)}
-                               disabled={updatingId === u.id}
-                               className={cn(
-                                  "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer",
-                                  u.isActive 
-                                     ? "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100" 
-                                     : "bg-red-50 text-red-500 border-red-100 hover:bg-red-100"
-                               )}
-                             >
-                                {u.isActive ? "Aktif" : "Nonaktif"}
-                             </button>
-                          </td>
-                          <td className="px-8 py-6 text-center">
-                             <div className="flex items-center justify-center gap-3">
-                                <button
-                                  onClick={() => openEditModal(u)}
-                                  disabled={updatingId === u.id}
-                                  className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 text-zinc-400 hover:text-primary hover:bg-primary/5 transition-all shadow-sm cursor-pointer"
-                                  title="Edit User"
-                                >
-                                   <Edit2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(u.id)}
-                                  disabled={updatingId === u.id}
-                                  className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm cursor-pointer"
-                                  title="Hapus User"
-                                >
-                                   <Trash2 className="w-4 h-4" />
-                                </button>
-                             </div>
-                          </td>
-                       </tr>
-                    ))
+                    filtered.map((u) => {
+                      const payStatus = getUserPaymentStatus(u);
+                      return (
+                        <tr key={u.id} className="hover:bg-zinc-50/30 transition-colors font-bold text-zinc-800">
+                           <td className="px-8 py-6">
+                              <div className="flex items-center gap-4">
+                                 <div className="w-10 h-10 bg-primary/5 text-primary rounded-xl flex items-center justify-center font-black text-lg italic">
+                                    {u.name?.[0] ?? "U"}
+                                 </div>
+                                 <div>
+                                    <p className="text-xs font-black uppercase tracking-tight text-zinc-900 leading-none">{u.name}</p>
+                                    <span className="text-[9px] font-black text-zinc-400 uppercase italic">NODE: {u.id.slice(-8).toUpperCase()}</span>
+                                 </div>
+                              </div>
+                           </td>
+                           <td className="px-8 py-6">
+                              <p className="text-xs font-bold text-zinc-700 leading-none">{u.email}</p>
+                              <p className="text-[9px] text-zinc-400 font-black mt-1 uppercase tracking-tight truncate max-w-[180px]">{u.address || "Belum ada alamat"}</p>
+                           </td>
+                           <td className="px-8 py-6 text-xs text-zinc-500 font-bold">{u.nik || "—"}</td>
+                           <td className="px-8 py-6">
+                              <span className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border italic leading-none shadow-sm", roleBadge[u.role])}>
+                                 {roleLabel[u.role] ?? u.role}
+                              </span>
+                           </td>
+                           <td className="px-8 py-6">
+                              {u.role === "USER" ? (
+                                <span className={cn(
+                                  "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border leading-none",
+                                  payStatus === "LUNAS" 
+                                    ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                                    : "bg-rose-50 text-rose-600 border-rose-100"
+                                )}>
+                                  {payStatus}
+                                </span>
+                              ) : (
+                                <span className="text-zinc-300 text-xs italic font-medium">—</span>
+                              )}
+                           </td>
+                           <td className="px-8 py-6">
+                              <button
+                                onClick={() => handleToggleActive(u.id, u.isActive)}
+                                disabled={updatingId === u.id}
+                                className={cn(
+                                   "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer",
+                                   u.isActive 
+                                      ? "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100" 
+                                      : "bg-red-50 text-red-500 border-red-100 hover:bg-red-100"
+                                )}
+                              >
+                                 {u.isActive ? "Aktif" : "Nonaktif"}
+                              </button>
+                           </td>
+                           <td className="px-8 py-6 text-center">
+                              <div className="flex items-center justify-center gap-3">
+                                 <button
+                                   onClick={() => openDetailModal(u)}
+                                   className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 text-zinc-400 hover:text-primary hover:bg-primary/5 transition-all shadow-sm cursor-pointer"
+                                   title="Detail & Riwayat"
+                                 >
+                                    <Eye className="w-4 h-4" />
+                                 </button>
+                                 <button
+                                   onClick={() => openEditModal(u)}
+                                   disabled={updatingId === u.id}
+                                   className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 text-zinc-400 hover:text-primary hover:bg-primary/5 transition-all shadow-sm cursor-pointer"
+                                   title="Edit User / Reset Password"
+                                 >
+                                    <Edit2 className="w-4 h-4" />
+                                 </button>
+                                 <button
+                                   onClick={() => handleDelete(u.id)}
+                                   disabled={updatingId === u.id}
+                                   className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm cursor-pointer"
+                                   title="Hapus User"
+                                 >
+                                    <Trash2 className="w-4 h-4" />
+                                 </button>
+                              </div>
+                           </td>
+                        </tr>
+                      );
+                    })
                  )}
               </tbody>
            </table>
@@ -394,7 +520,7 @@ export default function AdminUsersPage() {
                     <div className="space-y-4">
                        <label className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 italic pl-8 leading-none">System Password</label>
                        <div className="relative group">
-                          <Key className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-all" />
+                          <Lock className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-all" />
                           <input 
                             required type="password"
                             className="w-full pl-20 pr-8 py-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] focus:ring-4 focus:ring-primary/10 focus:bg-white outline-none transition-all font-black text-xs uppercase tracking-widest italic shadow-inner"
@@ -431,6 +557,18 @@ export default function AdminUsersPage() {
                        </div>
                     </div>
                  </div>
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 italic pl-8 leading-none">Alamat Lengkap</label>
+                    <div className="relative group">
+                       <MapPin className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-all" />
+                       <input 
+                         className="w-full pl-20 pr-8 py-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] focus:ring-4 focus:ring-primary/10 focus:bg-white outline-none transition-all font-black text-xs uppercase tracking-widest italic shadow-inner"
+                         placeholder="Jl. Letjen Suprapto No. X..." 
+                         value={newUser.address}
+                         onChange={e => setNewUser({...newUser, address: e.target.value})}
+                       />
+                    </div>
+                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                        <label className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 italic pl-8 leading-none">Authority Level</label>
@@ -449,19 +587,18 @@ export default function AdminUsersPage() {
                          value={newUser.isActive ? "ACTIVE" : "INACTIVE"}
                          onChange={e => setNewUser({...newUser, isActive: e.target.value === "ACTIVE"})}
                        >
-                          <option value="ACTIVE">Aktif</option>
-                          <option value="INACTIVE">Nonaktif</option>
+                          <option value="ACTIVE">AKTIF</option>
+                          <option value="INACTIVE">NONAKTIF</option>
                        </select>
                     </div>
                  </div>
 
-                 <Button 
-                    disabled={createLoading}
-                    type="submit" 
-                    className="w-full h-24 bg-primary text-white font-black rounded-full shadow-2xl shadow-primary/40 hover:scale-[1.02] active:scale-95 transition-all text-xs tracking-widest uppercase italic"
-                 >
-                    {createLoading ? <Loader2 className="w-8 h-8 animate-spin" /> : "Deploy Identity Node"}
-                 </Button>
+                 <div className="pt-10 flex border-t border-zinc-50">
+                    <Button type="submit" disabled={createLoading} className="rounded-full px-16 h-20 btn-premium group font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/30">
+                       {createLoading ? "Creating..." : "Daftarkan User Baru"}
+                       <ShieldCheck className="ml-4 w-5 h-5" />
+                    </Button>
+                 </div>
               </form>
            </Card>
         </div>
@@ -473,8 +610,8 @@ export default function AdminUsersPage() {
            <Card padding="none" className="bg-white rounded-[5rem] shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto border border-zinc-100 animate-in zoom-in-95 duration-500 relative p-12 lg:p-20">
               <div className="flex items-start justify-between mb-16">
                  <div className="space-y-3">
-                    <h2 className="text-4xl lg:text-6xl font-black italic tracking-tighter uppercase leading-none italic">Edit <span className="text-primary">User.</span></h2>
-                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mt-2 italic shadow-glow">Modify Identity configuration</p>
+                    <h2 className="text-4xl lg:text-6xl font-black italic tracking-tighter uppercase leading-none italic">Edit <span className="text-primary">Profile.</span></h2>
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mt-2 italic shadow-glow">Identity Parameter Adjustment</p>
                  </div>
                  <button onClick={() => setShowEditModal(false)} className="p-5 bg-zinc-50 text-zinc-400 rounded-full hover:bg-zinc-100 shadow-inner transition-all"><X className="w-8 h-8" /></button>
               </div>
@@ -508,13 +645,13 @@ export default function AdminUsersPage() {
                        </div>
                     </div>
                     <div className="space-y-4">
-                       <label className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 italic pl-8 leading-none">New Password (Optional)</label>
+                       <label className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 italic pl-8 leading-none">Reset Password (Opsional)</label>
                        <div className="relative group">
-                          <Key className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-all" />
+                          <Lock className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-all" />
                           <input 
                             type="password"
                             className="w-full pl-20 pr-8 py-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] focus:ring-4 focus:ring-primary/10 focus:bg-white outline-none transition-all font-black text-xs uppercase tracking-widest italic shadow-inner"
-                            placeholder="Kosongkan jika tidak diubah" 
+                            placeholder="Isi untuk ganti password..." 
                             value={editForm.password}
                             onChange={e => setEditForm({...editForm, password: e.target.value})}
                           />
@@ -547,6 +684,18 @@ export default function AdminUsersPage() {
                        </div>
                     </div>
                  </div>
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 italic pl-8 leading-none">Alamat Lengkap</label>
+                    <div className="relative group">
+                       <MapPin className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-all" />
+                       <input 
+                         className="w-full pl-20 pr-8 py-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] focus:ring-4 focus:ring-primary/10 focus:bg-white outline-none transition-all font-black text-xs uppercase tracking-widest italic shadow-inner"
+                         placeholder="Jl. Letjen Suprapto No. X..." 
+                         value={editForm.address}
+                         onChange={e => setEditForm({...editForm, address: e.target.value})}
+                       />
+                    </div>
+                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                        <label className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 italic pl-8 leading-none">Authority Level</label>
@@ -565,20 +714,131 @@ export default function AdminUsersPage() {
                          value={editForm.isActive ? "ACTIVE" : "INACTIVE"}
                          onChange={e => setEditForm({...editForm, isActive: e.target.value === "ACTIVE"})}
                        >
-                          <option value="ACTIVE">Aktif</option>
-                          <option value="INACTIVE">Nonaktif</option>
+                          <option value="ACTIVE">AKTIF</option>
+                          <option value="INACTIVE">NONAKTIF</option>
                        </select>
                     </div>
                  </div>
 
-                 <Button 
-                    disabled={editLoading}
-                    type="submit" 
-                    className="w-full h-24 bg-primary text-white font-black rounded-full shadow-2xl shadow-primary/40 hover:scale-[1.02] active:scale-95 transition-all text-xs tracking-widest uppercase italic"
-                 >
-                    {editLoading ? <Loader2 className="w-8 h-8 animate-spin" /> : "Save Changes"}
-                 </Button>
+                 <div className="pt-10 flex border-t border-zinc-50">
+                    <Button type="submit" disabled={editLoading} className="rounded-full px-16 h-20 btn-premium group font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/30">
+                       {editLoading ? "Saving..." : "Simpan Perubahan User"}
+                       <ShieldCheck className="ml-4 w-5 h-5" />
+                    </Button>
+                 </div>
               </form>
+           </Card>
+        </div>
+      )}
+
+      {/* ── Detail & History Modal ── */}
+      {showDetailModal && selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md p-6 text-left animate-in fade-in duration-500">
+           <Card padding="none" className="bg-white rounded-[5rem] shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto border border-zinc-100 animate-in zoom-in-95 duration-500 relative p-12 lg:p-20">
+              <div className="flex items-start justify-between mb-12">
+                 <div className="space-y-3">
+                    <h2 className="text-4xl lg:text-6xl font-black italic tracking-tighter uppercase leading-none italic">User <span className="text-primary">Details.</span></h2>
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mt-2 italic shadow-glow">Identity & Transaction History Ledger</p>
+                 </div>
+                 <button onClick={() => setShowDetailModal(false)} className="p-5 bg-zinc-50 text-zinc-400 rounded-full hover:bg-zinc-100 shadow-inner transition-all"><X className="w-8 h-8" /></button>
+              </div>
+
+              <div className="space-y-12">
+                 {/* Profil Summary */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-zinc-50 p-8 rounded-[3rem] border border-zinc-100">
+                    <div>
+                       <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Informasi Utama</p>
+                       <div className="space-y-3 mt-4 text-sm font-bold text-zinc-800">
+                          <p><span className="text-zinc-400">Nama:</span> {selectedUser.name}</p>
+                          <p><span className="text-zinc-400">Email:</span> {selectedUser.email}</p>
+                          <p><span className="text-zinc-400">NIK:</span> {selectedUser.nik || "Belum terekam"}</p>
+                          <p><span className="text-zinc-400">Telepon:</span> {selectedUser.phone || "—"}</p>
+                       </div>
+                    </div>
+                    <div>
+                       <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Alamat & Otoritas</p>
+                       <div className="space-y-3 mt-4 text-sm font-bold text-zinc-800">
+                          <p><span className="text-zinc-400">Role:</span> {roleLabel[selectedUser.role] ?? selectedUser.role}</p>
+                          <p><span className="text-zinc-400">Status Akun:</span> {selectedUser.isActive ? "AKTIF" : "NONAKTIF"}</p>
+                          <p className="truncate max-w-[320px]"><span className="text-zinc-400">Alamat:</span> {selectedUser.address || "Belum terdata"}</p>
+                          <p><span className="text-zinc-400">Terdaftar:</span> {new Date(selectedUser.createdAt).toLocaleDateString("id-ID")}</p>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Riwayat Pembayaran */}
+                 <div className="space-y-4">
+                    <p className="text-xs font-black uppercase text-primary tracking-widest border-l-4 border-primary pl-4">Riwayat Pembayaran Pajak</p>
+                    <div className="border border-zinc-100 rounded-[2.5rem] overflow-hidden">
+                       <table className="w-full text-left border-collapse">
+                          <thead>
+                             <tr className="bg-zinc-50 text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-150">
+                                <th className="px-6 py-4">Nomor Invoice</th>
+                                <th className="px-6 py-4">Objek Pajak</th>
+                                <th className="px-6 py-4">Jumlah</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4">Tanggal</th>
+                             </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-100 text-xs font-bold text-zinc-800">
+                             {selectedUser.payments && selectedUser.payments.length > 0 ? (
+                                selectedUser.payments.map((p) => (
+                                   <tr key={p.id} className="hover:bg-zinc-50/50">
+                                      <td className="px-6 py-4 text-mono text-primary">{p.id}</td>
+                                      <td className="px-6 py-4">{p.taxObject.name} <br/><span className="text-[9px] text-zinc-400">{p.taxObject.nop}</span></td>
+                                      <td className="px-6 py-4 text-emerald-600">{formatCurrency(p.amount)}</td>
+                                      <td className="px-6 py-4">
+                                         <span className={cn(
+                                            "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border",
+                                            p.status === "PAID" 
+                                              ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                                              : "bg-rose-50 text-rose-600 border-rose-100"
+                                         )}>
+                                            {p.status}
+                                         </span>
+                                      </td>
+                                      <td className="px-6 py-4 font-normal text-zinc-500">{new Date(p.createdAt).toLocaleDateString("id-ID")}</td>
+                                   </tr>
+                                ))
+                             ) : (
+                                <tr>
+                                   <td colSpan={5} className="px-6 py-8 text-center text-zinc-400 italic">Belum ada catatan pembayaran.</td>
+                                </tr>
+                             )}
+                          </tbody>
+                       </table>
+                    </div>
+                 </div>
+
+                 {/* Riwayat Perubahan Data */}
+                 <div className="space-y-4">
+                    <p className="text-xs font-black uppercase text-primary tracking-widest border-l-4 border-primary pl-4">Log Perubahan Data / Aktivitas</p>
+                    <div className="space-y-4">
+                       {selectedUser.auditLogs && selectedUser.auditLogs.length > 0 ? (
+                          selectedUser.auditLogs.map((log) => (
+                             <div key={log.id} className="p-6 bg-zinc-50 border border-zinc-100 rounded-2xl flex items-center justify-between text-xs font-bold">
+                                <div>
+                                   <p className="text-primary font-black uppercase tracking-wider">{log.action.replace(/_/g, ' ')}</p>
+                                   <p className="text-zinc-500 mt-1">Pada tabel: <span className="text-zinc-800 font-mono">{log.table}</span></p>
+                                </div>
+                                <div className="text-right text-zinc-400 font-normal">
+                                   <Clock className="w-3.5 h-3.5 inline mr-1" />
+                                   {new Date(log.createdAt).toLocaleString("id-ID")}
+                                </div>
+                             </div>
+                          ))
+                       ) : (
+                          <p className="text-xs text-zinc-400 italic pl-4">Belum ada log perubahan data wajib pajak ini.</p>
+                       )}
+                    </div>
+                 </div>
+              </div>
+
+              <div className="pt-10 flex border-t border-zinc-50 mt-12 justify-end">
+                 <button onClick={() => setShowDetailModal(false)} className="rounded-full px-10 h-16 bg-zinc-100 hover:bg-zinc-200 font-black uppercase text-[10px] tracking-widest transition-all">
+                    Tutup Detail
+                 </button>
+              </div>
            </Card>
         </div>
       )}

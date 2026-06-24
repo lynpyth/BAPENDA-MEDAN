@@ -43,6 +43,7 @@ export class AuditService {
     userId,
     table,
     action,
+    recordId,
     startDate,
     endDate,
     limit = 50,
@@ -51,6 +52,7 @@ export class AuditService {
     userId?: string;
     table?: string;
     action?: string;
+    recordId?: string;
     startDate?: Date;
     endDate?: Date;
     limit?: number;
@@ -60,6 +62,7 @@ export class AuditService {
     if (userId) where.userId = userId;
     if (table) where.table = table;
     if (action) where.action = action;
+    if (recordId) where.recordId = recordId;
     if (startDate || endDate) {
       where.createdAt = {};
       if (startDate) where.createdAt.gte = startDate;

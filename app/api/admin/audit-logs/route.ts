@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
     const userId = searchParams.get("userId") || undefined;
     const table = searchParams.get("table") || undefined;
     const action = searchParams.get("action") || undefined;
+    const recordId = searchParams.get("recordId") || undefined;
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
     const limit = parseInt(searchParams.get("limit") || "50");
@@ -27,6 +28,7 @@ export async function GET(req: NextRequest) {
       userId,
       table,
       action,
+      recordId,
       startDate,
       endDate,
       limit,

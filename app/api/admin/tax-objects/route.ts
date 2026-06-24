@@ -14,6 +14,15 @@ export async function GET() {
       include: {
         owner: {
           select: { name: true, email: true }
+        },
+        payments: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            taxPeriod: true,
+            createdAt: true,
+          }
         }
       },
       orderBy: { createdAt: "desc" },

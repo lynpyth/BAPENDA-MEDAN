@@ -18,17 +18,15 @@ export async function GET() {
     // 2. Total Objek Pajak
     const taxObjectCount = await prisma.taxObject.count();
 
-    // 3. Jumlah yang sudah membayar pajak (PAID payments)
-    const paidCount = await prisma.payment.count({
-      where: { status: "PAID" },
+    // 3. Total SPPT Terbit
+    const spptCount = await prisma.sppt.count();
+
+    // 4. Jumlah Wajib Pajak Aktif
+    const activeWpCount = await prisma.user.count({
+      where: { role: "USER", isActive: true },
     });
 
-    // 4. Jumlah yang masih memiliki tunggakan/utang (PENDING or EXPIRED payments)
-    const unpaidCount = await prisma.payment.count({
-      where: { status: { in: ["PENDING", "EXPIRED"] } },
-    });
-
-    // 5. Monthly Stats for the year (Revenue vs Tunggakan)
+    // Fetch all payments for aggregation
     const payments = await prisma.payment.findMany({
       select: {
         id: true,
@@ -44,6 +42,11 @@ export async function GET() {
       },
     });
 
+    let totalRevenueSum = 0;
+    let totalTunggakanSum = 0;
+    let paidCount = 0;
+    let unpaidCount = 0;
+
     const monthlyStats = Array.from({ length: 12 }, (_, i) => ({
       month: i,
       revenue: 0,
@@ -52,14 +55,22 @@ export async function GET() {
 
     // Sektor Pajak & District aggregates
     const sectorRevenueMap: Record<string, number> = {
-      PBB: 0,
-      BPHTB: 0,
-      PKB: 0,
-      Restoran: 0,
-      Hotel: 0,
-      Lainnya: 0,
+      "PKB": 0,
+      "BBN-KB": 0,
+      "PBB-KB": 0,
+      "P. ROKOK": 0,
+      "P. REKLAME": 0,
+      "PAT": 0,
+      "PBB-P2": 0,
+      "BPHTB": 0,
+      "PAB": 0,
+      "PBJT Jasa Perhotelan": 0,
+      "PBJT Makanan dan/atau Minuman": 0,
+      "PBJT Kesenian dan Hiburan": 0,
+      "PBJT Tenaga Listrik": 0,
+      "PBJT Jasa Parkir": 0,
+      "Lainnya": 0,
     };
-    let totalRevenueSum = 0;
 
     const districtRevenueMap: Record<string, number> = {
       "Medan Baru": 0,
@@ -71,6 +82,37 @@ export async function GET() {
       "Medan Area": 0,
     };
 
+    // Category distribution counts for Obj Pajak berdasarkan kategori chart
+    const objCategoryCounts: Record<string, number> = {
+      "PKB": 0,
+      "BBN-KB": 0,
+      "PBB-KB": 0,
+      "P. ROKOK": 0,
+      "P. REKLAME": 0,
+      "PAT": 0,
+      "PBB-P2": 0,
+      "BPHTB": 0,
+      "PAB": 0,
+      "PBJT Jasa Perhotelan": 0,
+      "PBJT Makanan dan/atau Minuman": 0,
+      "PBJT Kesenian dan Hiburan": 0,
+      "PBJT Tenaga Listrik": 0,
+      "PBJT Jasa Parkir": 0,
+      "Lainnya": 0,
+    };
+
+    const allObjects = await prisma.taxObject.findMany({
+      select: { type: true }
+    });
+    allObjects.forEach(obj => {
+      const type = obj.type || "PBB-P2";
+      if (type in objCategoryCounts) {
+        objCategoryCounts[type]++;
+      } else {
+        objCategoryCounts["Lainnya"]++;
+      }
+    });
+
     payments.forEach((pay) => {
       const date = new Date(pay.createdAt);
       const month = date.getMonth();
@@ -78,9 +120,10 @@ export async function GET() {
       if (pay.status === "PAID") {
         monthlyStats[month].revenue += amt;
         totalRevenueSum += amt;
+        paidCount++;
 
         // Sector distribution
-        const type = pay.taxObject?.type || "PBB";
+        const type = pay.taxObject?.type || "PBB-P2";
         if (type in sectorRevenueMap) {
           sectorRevenueMap[type] += amt;
         } else {
@@ -98,25 +141,39 @@ export async function GET() {
           }
         }
         if (!matched) {
-          // allocate pseudo-randomly to simulate a spread
           const dists = Object.keys(districtRevenueMap);
           const pseudoIndex = (pay.id ? pay.id.charCodeAt(0) : 0) % dists.length;
           districtRevenueMap[dists[pseudoIndex]] += amt;
         }
       } else if (pay.status === "PENDING" || pay.status === "EXPIRED") {
         monthlyStats[month].tunggakan += amt;
+        totalTunggakanSum += amt;
+        unpaidCount++;
       }
     });
+
+    const totalBills = paidCount + unpaidCount;
+    const kepatuhanRate = totalBills > 0 ? Math.round((paidCount / totalBills) * 100) : 100;
+    const totalPajakTerutang = totalRevenueSum + totalTunggakanSum;
 
     // Format sector list with percentages
     const sectorStats = Object.entries(sectorRevenueMap).map(([name, amount]) => {
       const typeLabels: Record<string, string> = {
-        PBB: "Pajak Bumi & Bangunan (PBB)",
-        BPHTB: "Bea Perolehan Hak Tanah (BPHTB)",
-        PKB: "Pajak Kendaraan Bermotor (PKB)",
-        Restoran: "Pajak Hotel & Restoran",
-        Hotel: "Pajak Hotel & Restoran",
-        Lainnya: "Sektor Fiskal Lainnya"
+        "PKB": "Pajak Kendaraan Bermotor (PKB)",
+        "BBN-KB": "Bea Balik Nama Kendaraan Bermotor (BBN-KB)",
+        "PBB-KB": "Pajak Bahan Bakar Kendaraan Bermotor (PBB-KB)",
+        "P. ROKOK": "Pajak Rokok",
+        "P. REKLAME": "Pajak Reklame",
+        "PAT": "Pajak Air Tanah (PAT)",
+        "PBB-P2": "Pajak Bumi dan Bangunan (PBB-P2)",
+        "BPHTB": "Bea Perolehan Hak atas Tanah & Bangunan (BPHTB)",
+        "PAB": "Pajak Alat Berat (PAB)",
+        "PBJT Jasa Perhotelan": "PBJT Jasa Perhotelan",
+        "PBJT Makanan dan/atau Minuman": "PBJT Makanan dan/atau Minuman",
+        "PBJT Kesenian dan Hiburan": "PBJT Kesenian dan Hiburan",
+        "PBJT Tenaga Listrik": "PBJT Tenaga Listrik",
+        "PBJT Jasa Parkir": "PBJT Jasa Parkir",
+        "Lainnya": "Sektor Fiskal Lainnya"
       };
       return {
         name: typeLabels[name] || name,
@@ -124,22 +181,6 @@ export async function GET() {
         pct: totalRevenueSum > 0 ? Math.round((amount / totalRevenueSum) * 100) : 0
       };
     });
-
-    // Ensure total pct sums up or default values are set if no payments
-    if (totalRevenueSum === 0) {
-      const defaultSectors = [
-        { name: "Pajak Bumi & Bangunan (PBB)", pct: 42 },
-        { name: "Bea Perolehan Hak Tanah (BPHTB)", pct: 28 },
-        { name: "Pajak Hotel & Restoran", pct: 15 },
-        { name: "Pajak Reklame & Media", pct: 9 },
-        { name: "Sektor Fiskal Lainnya", pct: 6 },
-      ];
-      sectorStats.splice(0, sectorStats.length, ...defaultSectors.map(s => ({
-        name: s.name,
-        pct: s.pct,
-        amount: 0
-      })));
-    }
 
     // Format district list with ranks
     const districtStats = Object.entries(districtRevenueMap).map(([name, amount]) => ({
@@ -177,6 +218,12 @@ export async function GET() {
       include: { user: { select: { name: true } } },
     });
 
+    const taxSubmissions = await prisma.taxSubmission.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      include: { user: { select: { name: true } } },
+    });
+
     const submissions = [
       ...research.map((r) => ({
         id: r.id,
@@ -205,6 +252,15 @@ export async function GET() {
         createdAt: c.createdAt.toISOString(),
         owner: c.user?.name || "Anonymous",
       })),
+      ...taxSubmissions.map((t) => ({
+        id: t.id,
+        number: t.ticketNumber,
+        type: t.type === "KEBERATAN" ? "Keberatan Pajak" : "Perubahan Data",
+        title: t.title,
+        status: t.status,
+        createdAt: t.createdAt.toISOString(),
+        owner: t.user.name,
+      })),
     ]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 10);
@@ -220,15 +276,19 @@ export async function GET() {
       stats: {
         userCount,
         taxObjectCount,
-        paidCount,
-        unpaidCount,
-        totalRevenue: totalRevenueSum
+        spptCount,
+        totalPajakTerutang,
+        totalPembayaranMasuk: totalRevenueSum,
+        totalTunggakanPajak: totalTunggakanSum,
+        activeWpCount,
+        kepatuhanRate,
       },
       monthlyStats,
       sectorStats,
       districtStats,
       submissions,
       recentActivity,
+      objCategoryCounts, // count data for category chart
     });
   } catch (error) {
     console.error("[ADMIN_STATS_GET]", error);
