@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3, 
   Users, 
@@ -42,6 +42,7 @@ interface NavItem {
 
 export const DashboardSidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -146,17 +147,17 @@ export const DashboardSidebar = () => {
 
           {/* Global Search Bar (Admin & Officer only) */}
           {(role === "ADMIN" || role === "OFFICER") && (
-            <div className="mb-6 relative group px-2">
-               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-300 group-focus-within:text-primary transition-colors" />
+            <div className="mb-6 relative px-2">
+               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                <input 
                  type="text" 
-                 placeholder="Cari global..." 
-                 className="w-full pl-12 pr-4 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 transition-all text-xs font-bold italic"
+                 placeholder="Cari data..." 
+                 className="w-full pl-10 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:bg-white focus:border-primary/50 transition-all text-xs font-semibold"
                  onKeyDown={(e) => {
                    if (e.key === "Enter") {
                      const val = e.currentTarget.value.trim();
                      if (val) {
-                       window.location.href = `/dashboard/admin/search?q=${encodeURIComponent(val)}`;
+                       router.push(`/dashboard/admin/search?q=${encodeURIComponent(val)}`);
                      }
                    }
                  }}

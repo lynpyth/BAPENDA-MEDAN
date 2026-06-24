@@ -14,7 +14,8 @@ import {
   Bell,
   Megaphone,
   MapPin,
-  ShieldCheck
+  ShieldCheck,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -37,6 +38,10 @@ export default function Home() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  const [nopQuery, setNopQuery] = useState("");
+  const [checkingNop, setCheckingNop] = useState(false);
+  const [nopResult, setNopResult] = useState<any>(null);
 
   useEffect(() => {
     fetch(window.location.origin + "/api/cms/news")
@@ -64,6 +69,30 @@ export default function Home() {
     } else {
       toast("Pencarian NOP", "Silakan masuk ke portal untuk melakukan pencarian NOP secara detail.", "info");
       router.push("/login");
+    }
+  };
+
+  const handleCheckNop = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nopQuery) {
+      toast("Input NOP Kosong", "Silakan masukkan NOP terlebih dahulu.", "warning");
+      return;
+    }
+    setCheckingNop(true);
+    setNopResult(null);
+    try {
+      const res = await fetch(`/api/tax/check?nop=${encodeURIComponent(nopQuery)}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setNopResult(data.data);
+        toast("Pemeriksaan Sukses", "Data NOP ditemukan.", "success");
+      } else {
+        toast("NOP Tidak Ditemukan", data.message || "Pastikan NOP yang Anda masukkan benar.", "error");
+      }
+    } catch {
+      toast("Error", "Gagal memeriksa NOP. Silakan coba lagi.", "error");
+    } finally {
+      setCheckingNop(false);
     }
   };
 
@@ -182,19 +211,62 @@ export default function Home() {
                   <p className="text-sm text-blue-100 leading-relaxed">Masukkan Nomor Objek Pajak (NOP) Anda untuk melihat status tagihan aktif secara instan.</p>
                </div>
                <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center">
-                  <div className="flex flex-col md:flex-row gap-4">
+                  <form onSubmit={handleCheckNop} className="flex flex-col md:flex-row gap-4 w-full">
                      <div className="flex-1 relative">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                         <input 
                            type="text" 
                            placeholder="Masukkan 18 Digit NOP Anda..." 
+                           value={nopQuery}
+                           onChange={(e) => setNopQuery(e.target.value)}
                            className="w-full pl-11 pr-4 h-12 bg-zinc-50 border border-zinc-200 rounded-xl focus:bg-white focus:border-primary/50 outline-none transition-all text-xs font-semibold uppercase tracking-wider"
                         />
                      </div>
-                     <Button className="h-12 px-8 rounded-xl bg-primary text-white hover:bg-primary/95 font-bold uppercase text-xs tracking-wider">
-                        Periksa Tagihan
+                     <Button type="submit" disabled={checkingNop} className="h-12 px-8 rounded-xl bg-primary text-white hover:bg-primary/95 font-bold uppercase text-xs tracking-wider flex items-center justify-center gap-2">
+                        {checkingNop ? <Loader2 className="w-4 h-4 animate-spin" /> : "Periksa Tagihan"}
                      </Button>
-                  </div>
+                  </form>
+                  {nopResult && (
+                      <div className="mt-8 p-6 bg-slate-50 border border-zinc-200 rounded-xl space-y-4 text-left animate-in fade-in slide-in-from-top-2 duration-300">
+                         <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+                            <h4 className="text-sm font-bold uppercase tracking-wider text-zinc-700">Detail Objek Pajak</h4>
+                            <button onClick={() => setNopResult(null)} className="text-zinc-400 hover:text-zinc-600">
+                               <X className="w-4 h-4" />
+                            </button>
+                         </div>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div>
+                               <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Nomor Objek Pajak (NOP)</p>
+                               <p className="font-bold text-zinc-800">{nopResult.objectInfo.nop}</p>
+                            </div>
+                            <div>
+                               <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Nama Wajib Pajak</p>
+                               <p className="font-bold text-zinc-800">{nopResult.objectInfo.name}</p>
+                            </div>
+                            <div className="md:col-span-2">
+                               <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Alamat Objek Pajak</p>
+                               <p className="font-semibold text-zinc-700">{nopResult.objectInfo.address}</p>
+                            </div>
+                            <div>
+                               <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Status Pembayaran</p>
+                               <span className={cn(
+                                  "inline-block px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mt-1 border",
+                                  nopResult.pendingAmount > 0 
+                                     ? "bg-rose-50 text-rose-600 border-rose-100" 
+                                     : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                               )}>
+                                  {nopResult.pendingAmount > 0 ? "Belum Lunas" : "Lunas"}
+                               </span>
+                            </div>
+                            <div>
+                               <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Jumlah Tunggakan Pajak</p>
+                               <p className="font-bold text-zinc-800 text-sm mt-0.5">
+                                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(nopResult.pendingAmount)}
+                               </p>
+                            </div>
+                         </div>
+                      </div>
+                   )}
                   <div className="mt-6 flex items-center gap-6 opacity-60">
                      <div className="flex items-center gap-2">
                         <ShieldCheck className="w-4 h-4 text-emerald-600" />
