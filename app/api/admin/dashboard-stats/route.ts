@@ -272,6 +272,19 @@ export async function GET() {
       include: { user: { select: { name: true } } },
     });
 
+    // 8. Pending counts for dashboards
+    const pendingPPID = await prisma.pPIDRequest.count({
+      where: { status: "OPEN" },
+    });
+
+    const pendingComplaints = await prisma.complaint.count({
+      where: { status: "OPEN" },
+    });
+
+    const pendingResearch = await prisma.researchRequest.count({
+      where: { status: "PENDING" },
+    });
+
     return NextResponse.json({
       stats: {
         userCount,
@@ -282,6 +295,12 @@ export async function GET() {
         totalTunggakanPajak: totalTunggakanSum,
         activeWpCount,
         kepatuhanRate,
+        paidCount,
+        unpaidCount,
+        totalRevenue: totalRevenueSum,
+        pendingPPID,
+        pendingComplaints,
+        pendingResearch,
       },
       monthlyStats,
       sectorStats,
