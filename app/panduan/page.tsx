@@ -74,44 +74,44 @@ export default function PanduanPage() {
 
    return (
       <PublicLayout>
-         <div className="container mx-auto px-6 py-24 space-y-24 selection:bg-primary/20">
+         <div className="container mx-auto px-6 py-20 space-y-16 selection:bg-primary/20">
 
             {/* ── Header Command ── */}
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 text-left">
-               <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                  <div className="flex items-center gap-3 text-primary">
-                     <div className="w-12 h-1.5 bg-primary rounded-full shadow-glow" />
-                     <p className="text-[10px] font-black uppercase tracking-[0.4em] italic leading-none underline decoration-primary/20 underline-offset-4">Self-Service Module</p>
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 text-left">
+               <div className="max-w-4xl space-y-4">
+                  <div className="flex items-center gap-2 text-primary">
+                     <div className="w-6 h-0.5 bg-primary" />
+                     <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Panduan Pengguna</p>
                   </div>
-                  <h1 className="text-5xl md:text-8xl font-black italic tracking-tighter leading-none text-foreground uppercase italic leading-[0.85]">
-                     Pusat <br /><span className="text-primary italic">Panduan.</span>
+                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight uppercase text-foreground">
+                     Pusat Panduan
                   </h1>
-                  <p className="text-xl text-muted-foreground font-medium max-w-2xl leading-relaxed italic border-l-4 border-primary/10 pl-10 ml-2">
-                     &quot;Setiap langkah dipermudah. Pelajari cara mengoptimalkan penggunaan portal SIPADA untuk kemudahan administrasi fiskal Anda secara inklusif.&quot;
+                  <p className="text-sm text-muted-foreground font-medium max-w-2xl leading-relaxed border-l-4 border-primary pl-4">
+                     Setiap langkah dipermudah. Pelajari cara mengoptimalkan penggunaan portal SIPADA untuk kemudahan administrasi fiskal Anda secara inklusif.
                   </p>
                </div>
 
-               <div className="relative group w-full lg:w-96">
-                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-all" />
+               <div className="relative w-full lg:w-80">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                   <input
                      type="text"
                      value={search}
                      onChange={e => setSearch(e.target.value)}
                      placeholder="Cari topik panduan..."
-                     className="w-full pl-14 pr-8 h-18 bg-white border border-zinc-100 rounded-[2rem] font-black italic text-xs uppercase tracking-widest outline-none shadow-xl shadow-zinc-100/10 focus:ring-4 focus:ring-primary/5 transition-all text-left"
+                     className="w-full pl-11 pr-4 h-12 bg-white border border-zinc-200 rounded-xl text-xs font-semibold uppercase tracking-wider outline-none shadow-sm focus:border-primary/50 transition-all text-left"
                   />
                </div>
             </div>
 
             {/* ── Layout Grid ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pt-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-6">
                {/* ── Navigation Tabs Lobby ── */}
-               <div className="lg:col-span-4 space-y-8">
-                  <div className="space-y-4">
+               <div className="lg:col-span-4 space-y-6">
+                  <div className="space-y-2">
                      {filteredGuides.length === 0 ? (
-                        <div className="p-12 text-center bg-zinc-50 rounded-[3rem] border-2 border-dashed border-zinc-100">
-                           <HelpCircle className="w-12 h-12 text-zinc-200 mx-auto mb-4" />
-                           <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic">Topic Not Indexed.</p>
+                        <div className="p-8 text-center bg-zinc-50 rounded-xl border-2 border-dashed border-zinc-200">
+                           <HelpCircle className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                           <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Topik Tidak Ditemukan</p>
                         </div>
                      ) : (
                         filteredGuides.map((g) => (
@@ -119,92 +119,69 @@ export default function PanduanPage() {
                               key={g.id}
                               onClick={() => setActiveGuide(g.id)}
                               className={cn(
-                                 "w-full flex items-center gap-6 px-10 h-28 rounded-[4rem] font-black transition-all group relative overflow-hidden text-left",
+                                 "w-full flex items-center gap-4 px-6 h-18 py-3 rounded-xl font-bold transition-all text-left",
                                  activeGuide === g.id
-                                    ? "bg-primary text-white shadow-2xl scale-[1.02] border-0"
-                                    : "bg-white text-zinc-600 hover:bg-zinc-50 border border-zinc-100 shadow-sm"
+                                    ? "bg-primary text-white scale-[1.01]"
+                                    : "bg-white text-zinc-600 hover:bg-zinc-50 border border-zinc-200 shadow-sm"
                               )}
                            >
-                              {activeGuide === g.id && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-14 bg-white/20 rounded-r-full shadow-glow" />}
-                              <div className={cn("w-14 h-14 rounded-[1.8rem] flex items-center justify-center shrink-0 border transition-all", activeGuide === g.id ? "bg-white/20 border-white/20 shadow-inner" : "bg-zinc-50 border-zinc-100 group-hover:text-primary group-hover:scale-110 shadow-sm")}>
-                                 <g.icon className="w-7 h-7" />
+                              <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border transition-all", activeGuide === g.id ? "bg-white/20 border-white/20" : "bg-zinc-50 border-zinc-200 text-zinc-600")}>
+                                 <g.icon className="w-5 h-5" />
                               </div>
-                              <span className="text-[11px] uppercase tracking-widest leading-tight italic">{g.title}</span>
+                              <span className="text-xs uppercase tracking-wider leading-tight">{g.title}</span>
                            </button>
                         ))
                      )}
                   </div>
 
                   {/* ── Promo Light Section ── */}
-                  <Card padding="none" variant="elevated" className="mt-12 bg-white border-zinc-100 rounded-[5rem] p-14 lg:p-18 space-y-12 relative overflow-hidden group shadow-2xl shadow-primary/5 cursor-default text-left">
-                     <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:rotate-12 transition-transform duration-1000 -z-0">
-                        <Play className="w-64 h-64" />
-                     </div>
-                     <div className="space-y-10 relative z-10 text-center flex flex-col items-center">
-                        <div className="mx-auto w-24 h-24 bg-primary/10 rounded-[3rem] flex items-center justify-center shadow-inner group-hover:rotate-12 group-hover:scale-110 transition-all border border-primary/5">
-                           <Play className="w-12 h-12 fill-primary text-primary" />
+                  <Card className="bg-white border border-zinc-200 rounded-xl p-6 space-y-6 shadow-sm text-left">
+                     <div className="space-y-4 text-center flex flex-col items-center">
+                        <div className="mx-auto w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/5">
+                           <Play className="w-5 h-5 fill-primary text-primary" />
                         </div>
-                        <div className="space-y-6">
-                           <h4 className="text-4xl lg:text-5xl font-black italic tracking-tighter leading-none text-foreground uppercase italic underline decoration-primary/10 decoration-8 underline-offset-8">Tutorial <br /><span className="text-primary italic">Visual.</span></h4>
-                           <p className="text-[11px] font-black text-zinc-500 uppercase tracking-[0.3em] italic border-t border-zinc-100 pt-6">&quot;High-Definition Precision Logic&quot;</p>
+                        <div className="space-y-2">
+                           <h4 className="text-lg font-bold tracking-tight uppercase text-foreground">Tutorial Visual</h4>
+                           <p className="text-xs text-muted-foreground">Video panduan langkah demi langkah penggunaan sistem.</p>
                         </div>
-                        <Button variant="outline" onClick={handleWatch} className="w-full h-20 rounded-[2.5rem] font-black uppercase text-xs tracking-widest border-zinc-100 bg-white hover:bg-zinc-50 transition-all shadow-xl shadow-zinc-100/10">Tonton Video Tutorial <ArrowRight className="ml-4 w-5 h-5 group-hover:translate-x-3 transition-transform" /></Button>
+                        <Button variant="outline" onClick={handleWatch} className="w-full h-10 rounded-xl font-bold uppercase text-xs tracking-wider border-zinc-200 bg-white hover:bg-zinc-50 transition-all flex items-center justify-center gap-2">Tonton Video <ArrowRight className="w-4 h-4" /></Button>
                      </div>
                   </Card>
                </div>
 
                {/* ── Guide Steps Canvas ── */}
-               <div className="lg:col-span-8 animate-in fade-in slide-in-from-right-8 duration-1000">
+               <div className="lg:col-span-8">
                   {guides.map((g) => activeGuide === g.id && (
-                     <Card key={g.id} padding="none" variant="elevated" className="bg-white border-zinc-100 rounded-[5rem] min-h-[700px] flex flex-col p-14 md:p-24 lg:p-28 relative overflow-hidden shadow-2xl shadow-primary/5 text-left">
-                        <div className="absolute top-0 right-0 p-40 opacity-5 -z-0">
-                           <g.icon className="w-[500px] h-[500px]" />
-                        </div>
-                        <div className="relative z-10 flex-1 space-y-24">
-                           <div className="space-y-10">
-                              <div className="inline-flex px-8 py-3 bg-primary/5 text-primary rounded-full text-[11px] font-black uppercase tracking-[0.3em] italic border border-primary/10 leading-none">Modul Panduan: [{g.id}]</div>
-                              <h2 className="text-5xl md:text-8xl font-black italic tracking-tighter leading-none text-foreground uppercase italic leading-[0.85]">{g.title}</h2>
-                              <p className="text-2xl text-muted-foreground font-medium max-w-3xl leading-relaxed italic border-l-8 border-primary/10 pl-12 ml-4">&quot;{g.desc}&quot;</p>
+                     <Card key={g.id} className="bg-white border border-zinc-200 rounded-xl p-8 lg:p-12 relative flex flex-col shadow-sm text-left min-h-[500px]">
+                        <div className="flex-1 space-y-8">
+                           <div className="space-y-4">
+                              <div className="inline-flex px-3 py-1 bg-primary/5 text-primary rounded-full text-[10px] font-bold uppercase tracking-wider border border-primary/10 leading-none">Panduan #{g.id}</div>
+                              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground uppercase">{g.title}</h2>
+                              <p className="text-sm text-muted-foreground leading-relaxed border-l-4 border-zinc-200 pl-4">{g.desc}</p>
                            </div>
 
-                           <div className="grid grid-cols-1 gap-10">
+                           <div className="grid grid-cols-1 gap-4">
                               {g.steps.map((step, i) => (
-                                 <div key={i} className="flex items-start gap-12 p-14 lg:p-18 bg-zinc-50/50 rounded-[4.5rem] border border-zinc-100 hover:border-primary/20 transition-all group/step shadow-inner hover:bg-white relative">
-                                    <div className="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center shrink-0 font-black text-4xl italic tracking-tighter text-zinc-500 border-2 border-zinc-50 group-hover/step:bg-primary group-hover/step:text-white group-hover/step:border-primary transition-all shadow-xl group-hover/step:scale-110 group-hover/step:-rotate-6">
+                                 <div key={i} className="flex items-start gap-4 p-4 bg-zinc-50 border border-zinc-200/50 rounded-xl">
+                                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shrink-0 font-bold text-lg text-primary border border-zinc-200">
                                        {i + 1}
                                     </div>
-                                    <div className="space-y-4 pt-2">
-                                       <p className="text-2xl font-bold text-foreground leading-snug italic tracking-tight">
-                                          &quot;{step}&quot;
+                                    <div className="space-y-1 pt-1.5 flex-1">
+                                       <p className="text-sm font-semibold text-foreground leading-snug">
+                                          {step}
                                        </p>
-                                       <div className="flex items-center gap-3 text-[10px] font-black uppercase text-emerald-500 opacity-0 group-hover/step:opacity-100 transition-all group-hover/step:translate-x-2">
-                                          <CheckCircle className="w-4 h-4 fill-emerald-500/10" /> Step Validated by SIPADA-Engine
-                                       </div>
                                     </div>
                                  </div>
                               ))}
                            </div>
 
-                           <div className="pt-20 flex flex-wrap gap-8 border-t border-zinc-100">
-                              <Button variant="primary" size="xl" onClick={handleDownload} className="rounded-full px-16 h-24 btn-premium group font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-primary/30">Unduh PDF Panduan <Download className="ml-5 w-7 h-7 group-hover:translate-y-3 transition-transform" /></Button>
-                              <Button variant="outline" onClick={handleSupport} className="rounded-full px-14 h-24 gap-6 font-black uppercase text-xs tracking-[0.2em] border-zinc-100 bg-white hover:bg-zinc-50 transition-all shadow-xl shadow-zinc-100/10 italic text-zinc-600"><HelpCircle className="w-7 h-7 text-primary" /> Hubungi Support Sistem</Button>
+                           <div className="pt-6 flex flex-wrap gap-4 border-t border-zinc-100">
+                              <Button onClick={handleDownload} className="rounded-xl px-6 h-11 bg-primary text-white hover:bg-primary/95 font-bold uppercase text-xs tracking-wider flex items-center gap-2">Unduh PDF <Download className="w-4 h-4" /></Button>
+                              <Button variant="outline" onClick={handleSupport} className="rounded-xl px-6 h-11 font-bold uppercase text-xs tracking-wider border-zinc-200 bg-white hover:bg-zinc-50 transition-all text-zinc-600 flex items-center gap-2"><HelpCircle className="w-4 h-4 text-primary" /> Hubungi Dukungan</Button>
                            </div>
                         </div>
                      </Card>
                   ))}
-               </div>
-            </div>
-
-            {/* ── Platform Certification ── */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-20 opacity-40 grayscale group-hover:grayscale-0 transition-all duration-1000 mb-20">
-               <div className="flex items-center gap-6 group/badge">
-                  <Smartphone className="w-10 h-10 group-hover/badge:scale-125 transition-transform text-primary" />
-                  <div className="text-left font-black uppercase tracking-widest text-[12px] italic">Mobile Cloud Service <p className="text-zinc-500 tracking-normal opacity-50 not-italic font-medium">Bapenda Medan Optimized</p></div>
-               </div>
-               <div className="h-12 w-[1px] bg-zinc-200 hidden md:block" />
-               <div className="flex items-center gap-6 group/badge">
-                  <Monitor className="w-10 h-10 group-hover/badge:scale-125 transition-transform text-primary" />
-                  <div className="text-left font-black uppercase tracking-widest text-[12px] italic">Expert Desktop UI/UX <p className="text-zinc-500 tracking-normal opacity-50 not-italic font-medium">Precision Browser View</p></div>
                </div>
             </div>
          </div>

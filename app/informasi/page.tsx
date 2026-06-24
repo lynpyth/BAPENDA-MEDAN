@@ -90,90 +90,86 @@ export default function InformasiPage() {
 
   return (
     <PublicLayout>
-      <div className="container mx-auto px-6 py-20 space-y-20 selection:bg-primary/20">
+      <div className="container mx-auto px-6 py-20 space-y-16 selection:bg-primary/20">
          {/* Header */}
-         <div className="max-w-4xl space-y-6 text-left">
-            <p className="text-primary font-black uppercase tracking-[0.4em] text-xs underline decoration-primary/20 underline-offset-4">Pusat Informasi</p>
-            <h1 className="text-5xl md:text-7xl font-black italic tracking-tighter leading-tight text-foreground uppercase italic leading-[0.85]">
-               Warta & <span className="text-primary italic">Pembaruan.</span>
+         <div className="max-w-4xl space-y-4 text-left">
+            <p className="text-primary font-bold uppercase tracking-wider text-xs">Pusat Informasi</p>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight uppercase text-foreground">
+               Warta & Pembaruan
             </h1>
-            <p className="text-xl text-muted-foreground font-medium max-w-3xl leading-relaxed italic border-l-4 border-primary/10 pl-10 ml-2">
+            <p className="text-sm text-muted-foreground font-medium max-w-3xl leading-relaxed border-l-4 border-primary pl-4">
                Sumber berita resmi, pengumuman publik, dan panduan terkini mengenai kebijakan pendapatan daerah Kota Medan secara real-time.
             </p>
          </div>
 
          {/* Search & Categories */}
-         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-zinc-100 pb-12">
-            <div className="flex items-center gap-3 overflow-x-auto pb-4 md:pb-0 scrollbar-hide no-scrollbar">
+         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-zinc-200 pb-8">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide no-scrollbar">
                {categories.map(cat => (
                   <Button 
                     key={cat} 
                     variant="ghost" 
                     onClick={() => setActiveCategory(cat)}
                     className={cn(
-                      "px-8 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap",
+                      "px-4 h-10 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all whitespace-nowrap",
                       activeCategory === cat 
-                        ? "bg-primary text-white border-primary shadow-xl shadow-primary/20" 
-                        : "bg-white border-zinc-100 hover:border-primary/20 text-zinc-600"
+                        ? "bg-primary text-white border-primary" 
+                        : "bg-white border-zinc-200 hover:border-primary/20 text-zinc-600 shadow-sm"
                     )}
                   >
                     {cat}
                   </Button>
                ))}
             </div>
-            <div className="relative group max-w-md w-full">
-               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-300 group-focus-within:text-primary transition-all" />
+            <div className="relative max-w-md w-full">
+               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                <input 
                   type="text" 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   placeholder="Cari berita atau pengumuman..." 
-                  className="w-full pl-14 pr-8 h-14 bg-zinc-50 rounded-2xl border border-transparent focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest outline-none shadow-inner italic"
+                  className="w-full pl-11 pr-4 h-10 bg-white border border-zinc-200 rounded-xl focus:border-primary/50 transition-all text-xs font-semibold uppercase tracking-wider outline-none shadow-sm"
                />
             </div>
          </div>
 
          {/* Featured Content Ledger */}
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {loading ? (
-               [1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-zinc-50 border border-zinc-100 rounded-[3rem] animate-pulse" />)
+               [1, 2, 3, 4].map(i => <div key={i} className="h-48 bg-zinc-50 border border-zinc-200 rounded-xl animate-pulse" />)
             ) : filteredNews.length === 0 ? (
-               <div className="lg:col-span-2 py-32 text-center bg-white border-2 border-dashed border-zinc-100 rounded-[5rem] group hover:border-primary/20 transition-all shadow-inner">
-                  <Search className="w-20 h-20 text-zinc-100 mx-auto mb-8" />
-                  <p className="text-xl font-black italic tracking-tighter text-zinc-300 uppercase italic">Data Not Found — Adjusting Keywords.</p>
+               <div className="lg:col-span-2 py-20 text-center bg-white border-2 border-dashed border-zinc-200 rounded-xl">
+                  <Search className="w-12 h-12 text-zinc-300 mx-auto mb-4" />
+                  <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Berita tidak ditemukan</p>
                </div>
             ) : (
                filteredNews.map((item) => {
                   const Icon = getIcon(item.category);
                   const colorClass = getColor(item.category);
                   return (
-                     <Card key={item.id} padding="none" variant="elevated" className="group flex flex-col md:flex-row overflow-hidden border-zinc-100 hover:border-primary/20 hover:scale-[1.01] transition-all bg-white shadow-[0_50px_100px_-20px_rgba(0,0,0,0.05)] rounded-[4rem] text-left">
-                        <div className={cn("md:w-16 flex flex-col items-center justify-center text-white py-10 shrink-0", colorClass)}>
-                           <Icon className="w-8 h-8 rotate-[-90deg] md:rotate-0" />
-                           <div className="h-24 w-[1px] bg-white/20 mt-10 hidden md:block" />
+                     <Card key={item.id} className="group flex flex-col md:flex-row overflow-hidden border border-zinc-200 hover:border-primary/30 transition-all bg-white shadow-sm rounded-xl p-0 text-left">
+                        <div className={cn("md:w-12 flex flex-col items-center justify-center text-white py-6 shrink-0", colorClass)}>
+                           <Icon className="w-5 h-5 rotate-[-90deg] md:rotate-0" />
                         </div>
-                        <div className="flex-1 p-10 lg:p-12 space-y-6 relative overflow-hidden">
-                           <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:rotate-12 transition-transform duration-1000 -z-0">
-                              <Icon className="w-40 h-40" />
-                           </div>
-                           <div className="flex items-center justify-between relative z-10">
-                              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] bg-primary/5 px-4 py-1.5 rounded-full border border-primary/10 italic leading-none">{item.category}</span>
-                              <div className="flex items-center gap-2 text-zinc-500 font-black text-[10px] uppercase tracking-widest leading-none">
-                                 <Clock className="w-3.5 h-3.5" /> {new Date(item.createdAt).toLocaleDateString("id-ID", { month: "short", day: "numeric", year: "numeric" })}
+                        <div className="flex-1 p-6 space-y-4 relative overflow-hidden">
+                           <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-primary uppercase tracking-wider bg-primary/5 px-2.5 py-0.5 rounded border border-primary/10 leading-none">{item.category}</span>
+                              <div className="flex items-center gap-1 text-zinc-400 font-semibold text-[10px] uppercase tracking-wider leading-none">
+                                 <Clock className="w-3 h-3" /> {new Date(item.createdAt).toLocaleDateString("id-ID", { month: "short", day: "numeric", year: "numeric" })}
                               </div>
                            </div>
-                           <h3 className="text-2xl lg:text-3xl font-black italic tracking-tighter leading-tight text-foreground group-hover:text-primary transition-colors relative z-10 uppercase italic">{item.title}</h3>
-                           <p className="text-muted-foreground font-medium text-sm leading-relaxed relative z-10 italic border-l-4 border-zinc-50 pl-8 ml-2">
-                              &quot;{item.summary || item.content?.substring(0, 120) + "..."}&quot;
+                           <h3 className="text-lg font-bold tracking-tight text-foreground group-hover:text-primary transition-colors uppercase">{item.title}</h3>
+                           <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+                              {item.summary || item.content?.substring(0, 120) + "..."}
                            </p>
-                           <div className="pt-4 relative z-10">
+                           <div className="pt-2">
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
                                 onClick={() => toast("Akses Terbatas", "Detail artikel saat ini hanya tersedia melalui Portal Berita Internal.", "info")}
-                                className="px-0 group-hover:text-primary gap-4 font-black uppercase text-[10px] tracking-widest border-b border-transparent hover:border-primary transition-all rounded-none italic"
+                                className="px-0 group-hover:text-primary gap-2 font-bold uppercase text-[10px] tracking-wider transition-all rounded-none"
                               >
-                                 Baca Artikel Lengkap <ArrowRight className="w-4 h-4 group-hover:translate-x-3 transition-transform" />
+                                 Baca Artikel Lengkap <ArrowRight className="w-3.5 h-3.5" />
                               </Button>
                            </div>
                         </div>
@@ -184,30 +180,28 @@ export default function InformasiPage() {
          </div>
 
          {/* Newsletter CTA */}
-         <Card padding="none" variant="elevated" className="bg-white border-zinc-100 rounded-[5rem] relative overflow-hidden group shadow-[0_50px_100px_-20px_rgba(0,0,0,0.05)] text-center p-14 lg:p-24 overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-            <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
-            <div className="max-w-3xl mx-auto space-y-12 relative z-10">
-               <div className="mx-auto w-20 h-20 bg-white border border-zinc-50 rounded-[2.5rem] flex items-center justify-center text-primary group-hover:scale-110 group-hover:rotate-12 transition-all shadow-2xl shadow-primary/10">
-                  <Megaphone className="w-10 h-10" />
+         <Card className="bg-white border border-zinc-200 rounded-xl relative shadow-sm text-center p-8 md:p-12 overflow-hidden">
+            <div className="max-w-xl mx-auto space-y-6">
+               <div className="mx-auto w-12 h-12 bg-white border border-zinc-200 rounded-xl flex items-center justify-center text-primary shadow-sm">
+                  <Megaphone className="w-6 h-6" />
                </div>
-               <div className="space-y-6">
-                 <h2 className="text-4xl md:text-6xl font-black italic tracking-tighter leading-tight italic uppercase text-foreground">Selalu <span className="text-primary underline decoration-primary/10 underline-offset-8 decoration-8">Terinformasi.</span></h2>
-                 <p className="text-xl text-muted-foreground font-medium leading-relaxed italic border-l-4 border-primary/10 pl-10 mx-auto max-w-xl">
-                   &quot;Dapatkan update langsung mengenai regulasi pajak terbaru dan pengumuman pelayanan ke kotak masuk Anda secara otomatis.&quot;
-                 </p>
+               <div className="space-y-2">
+                  <h2 className="text-2xl font-bold tracking-tight uppercase text-foreground">Selalu Terinformasi</h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                     Dapatkan update langsung mengenai regulasi pajak terbaru dan pengumuman pelayanan ke kotak masuk Anda secara otomatis.
+                  </p>
                </div>
-               <form onSubmit={handleSubscribe} className="flex flex-col md:flex-row items-center gap-6 max-w-xl mx-auto pt-8">
+               <form onSubmit={handleSubscribe} className="flex flex-col md:flex-row items-center gap-4 pt-4">
                   <input 
                      type="email" 
                      required
                      value={email}
                      onChange={e => setEmail(e.target.value)}
                      placeholder="Daftarkan Email Anda" 
-                     className="w-full h-18 bg-zinc-50 rounded-[2rem] border border-zinc-100 px-10 outline-none focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-black text-sm shadow-inner italic"
+                     className="w-full h-11 bg-zinc-50 rounded-xl border border-zinc-200 px-4 outline-none focus:bg-white focus:border-primary/50 transition-all text-xs font-semibold uppercase tracking-wider"
                   />
-                  <Button type="submit" variant="primary" size="lg" className="rounded-[2rem] h-18 px-12 btn-premium group whitespace-nowrap font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/20">
-                     Langganan <ArrowRight className="ml-4 w-5 h-5 group-hover:translate-x-3 transition-transform" />
+                  <Button type="submit" className="rounded-xl h-11 px-6 bg-primary text-white hover:bg-primary/95 font-bold uppercase text-xs tracking-wider whitespace-nowrap flex items-center gap-2">
+                     Langganan <ArrowRight className="w-4 h-4" />
                   </Button>
                </form>
             </div>
