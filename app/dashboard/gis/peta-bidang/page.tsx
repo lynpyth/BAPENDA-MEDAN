@@ -57,19 +57,19 @@ export default function PetaBidangPage() {
     import("leaflet").then((L) => {
       const greenIcon = L.divIcon({
         className: "premium-marker",
-        html: `<div class="marker-pulse bg-emerald-500/20"></div><div class="marker-pin" style="background-color: #10b981"></div>`,
+        html: `<div class="marker-pulse bg-emerald-500/20"></div><svg class="absolute left-0 top-0 w-[26px] h-[36px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35));"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#10b981" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" fill="#ffffff"/></svg>`,
         iconSize: [26, 36],
         iconAnchor: [13, 36],
       });
       const yellowIcon = L.divIcon({
         className: "premium-marker",
-        html: `<div class="marker-pulse bg-amber-500/20"></div><div class="marker-pin" style="background-color: #f59e0b"></div>`,
+        html: `<div class="marker-pulse bg-amber-500/20"></div><svg class="absolute left-0 top-0 w-[26px] h-[36px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35));"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" fill="#ffffff"/></svg>`,
         iconSize: [26, 36],
         iconAnchor: [13, 36],
       });
       const redIcon = L.divIcon({
         className: "premium-marker",
-        html: `<div class="marker-pulse bg-red-500/20"></div><div class="marker-pin" style="background-color: #ef4444"></div>`,
+        html: `<div class="marker-pulse bg-red-500/20"></div><svg class="absolute left-0 top-0 w-[26px] h-[36px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35));"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ef4444" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" fill="#ffffff"/></svg>`,
         iconSize: [26, 36],
         iconAnchor: [13, 36],
       });
@@ -145,7 +145,7 @@ export default function PetaBidangPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Filters Sidebar */}
-        <Card className="lg:col-span-1 p-6 space-y-6 bg-white border border-zinc-100 rounded-[2.5rem] shadow-sm">
+        <Card className="lg:col-span-1 p-6 space-y-6 bg-white border border-zinc-100 rounded-[2.5rem] shadow-sm overflow-visible relative z-30">
           <h3 className="font-black italic uppercase text-sm tracking-widest flex items-center gap-2 text-primary"><Filter className="w-4 h-4" /> Filter Peta</h3>
           
           <div className="space-y-4">
@@ -210,15 +210,15 @@ export default function PetaBidangPage() {
 
           <div className="pt-4 border-t border-zinc-100 space-y-3">
             <div className="flex items-center gap-3 text-xs font-bold">
-              <div className="w-4 h-4 bg-emerald-500 rounded-full shrink-0" />
+              <div className="w-3.5 h-3.5 bg-emerald-500 rounded-t-full rounded-bl-full rotate-45 border-2 border-white shadow-sm shrink-0" />
               <span>Lunas</span>
             </div>
             <div className="flex items-center gap-3 text-xs font-bold">
-              <div className="w-4 h-4 bg-amber-500 rounded-full shrink-0" />
+              <div className="w-3.5 h-3.5 bg-amber-500 rounded-t-full rounded-bl-full rotate-45 border-2 border-white shadow-sm shrink-0" />
               <span>Belum Jatuh Tempo</span>
             </div>
             <div className="flex items-center gap-3 text-xs font-bold">
-              <div className="w-4 h-4 bg-red-500 rounded-full shrink-0" />
+              <div className="w-3.5 h-3.5 bg-red-500 rounded-t-full rounded-bl-full rotate-45 border-2 border-white shadow-sm shrink-0" />
               <span>Menunggak / Expired</span>
             </div>
           </div>

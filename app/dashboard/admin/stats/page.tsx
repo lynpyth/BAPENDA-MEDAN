@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -13,7 +15,8 @@ import {
   ArrowUpRight,
   TrendingDown,
   Building2,
-  Percent
+  Percent,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
@@ -60,9 +63,26 @@ function formatShortCurrency(val: number) {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
 export default function AdminStatsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated" && (session?.user as any)?.role !== "ADMIN") {
+      router.replace("/dashboard");
+    }
+  }, [session, status, router]);
+
   const { toast } = useToast();
   const [data, setData] = useState<APIStats | null>(null);
   const [loading, setLoading] = useState(true);
+
+  if (status === "loading" || (session?.user as any)?.role !== "ADMIN") {
+     return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+           <Loader2 className="w-12 h-12 text-[#1E40AF] animate-spin" />
+        </div>
+     );
+  }
 
   useEffect(() => {
     fetch("/api/admin/dashboard-stats")
@@ -211,7 +231,7 @@ export default function AdminStatsPage() {
           <div className="flex items-center gap-4 bg-zinc-50 p-2.5 rounded-[2rem] border border-zinc-100 shadow-inner">
             <div className="flex items-center gap-2 px-4">
               <div className="w-3 h-3 rounded-full bg-primary" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 italic">Penerimaan</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 italic">Pendapatan</span>
             </div>
             <div className="flex items-center gap-2 px-4 border-l border-zinc-200">
               <div className="w-3 h-3 rounded-full bg-amber-400" />
@@ -230,7 +250,7 @@ export default function AdminStatsPage() {
               const tunggakanHeight = (stats.tunggakan / maxMonthlyVal) * 100;
               
               return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-6 group/bar h-full justify-end">
+                <div key={i} className="flex-1 flex flex-col items-center gap-6 group/bar h-full justify-end relative hover:z-30">
                   <div className="w-full flex items-end justify-center gap-1.5 md:gap-2.5 h-[80%]">
                     {/* Revenue Bar */}
                     <div 
@@ -238,7 +258,7 @@ export default function AdminStatsPage() {
                       style={{ height: `${Math.max(revHeight, 3)}%` }}
                     >
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-zinc-900 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg opacity-0 group-hover/rev:opacity-100 transition-all duration-300 whitespace-nowrap shadow-xl z-20 pointer-events-none">
-                        Rev: {formatShortCurrency(stats.revenue)}
+                        Pendapatan: {formatShortCurrency(stats.revenue)}
                       </div>
                     </div>
 

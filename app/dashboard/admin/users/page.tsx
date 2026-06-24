@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { 
   Users, Search, ShieldAlert, Star, 
   Activity, ArrowRight, Filter, ShieldCheck, 
-  Trash2, Plus, X, Loader2, Eye, Mail, User as UserIcon, Edit2, CheckCircle2, AlertTriangle, Phone, Lock, MapPin, Calendar, Clock, CreditCard
+  Trash2, Plus, X, Loader2, Eye, Mail, User as UserIcon, Edit2, CheckCircle2, AlertTriangle, Phone, Lock, MapPin, Calendar, Clock, CreditCard, ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -77,9 +79,26 @@ function formatCurrency(val: number) {
 }
 
 export default function AdminUsersPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated" && (session?.user as any)?.role !== "ADMIN") {
+      router.replace("/dashboard");
+    }
+  }, [session, status, router]);
+
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+
+  if (status === "loading" || (session?.user as any)?.role !== "ADMIN") {
+     return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+           <Loader2 className="w-12 h-12 text-[#1E40AF] animate-spin" />
+        </div>
+     );
+  }
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("ALL");
   const [filterStatus, setFilterStatus] = useState("ALL"); // ALL, ACTIVE, INACTIVE
@@ -302,7 +321,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* ── Search & Filter ── */}
-      <div className="flex flex-col gap-6 pt-6 bg-zinc-50/50 p-8 rounded-[3rem] border border-zinc-100">
+      <div className="flex flex-col gap-6 pt-6 bg-zinc-50/50 p-8 rounded-[3rem] border border-zinc-100 relative z-30 overflow-visible">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Quick Search */}
           <div className="lg:col-span-4 relative group">
@@ -319,46 +338,50 @@ export default function AdminUsersPage() {
              <select
                value={filterRole}
                onChange={(e) => setFilterRole(e.target.value)}
-               className="w-full px-8 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
+               className="w-full pl-8 pr-12 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
              >
                <option value="ALL">Semua Role</option>
                {ROLES.map(r => <option key={r} value={r}>{roleLabel[r]}</option>)}
              </select>
+             <ChevronDown className="absolute right-8 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
           {/* Status Filter */}
           <div className="relative group lg:col-span-2">
              <select
                value={filterStatus}
                onChange={(e) => setFilterStatus(e.target.value)}
-               className="w-full px-8 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
+               className="w-full pl-8 pr-12 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
              >
                <option value="ALL">Semua Status Akun</option>
                <option value="ACTIVE">Aktif</option>
                <option value="INACTIVE">Nonaktif</option>
              </select>
+             <ChevronDown className="absolute right-8 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
           {/* Payment Status Filter */}
           <div className="relative group lg:col-span-2">
              <select
                value={filterPayment}
                onChange={(e) => setFilterPayment(e.target.value)}
-               className="w-full px-8 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
+               className="w-full pl-8 pr-12 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
              >
                <option value="ALL">Semua Status Bayar</option>
                <option value="LUNAS">Lunas Pajak</option>
                <option value="MENUNGGAK">Menunggak / Piutang</option>
              </select>
+             <ChevronDown className="absolute right-8 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
           {/* Region Filter */}
           <div className="relative group lg:col-span-2">
              <select
                value={filterRegion}
                onChange={(e) => setFilterRegion(e.target.value)}
-               className="w-full px-8 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
+               className="w-full pl-8 pr-12 h-20 bg-white border border-zinc-100 rounded-[2.5rem] outline-none shadow-2xl shadow-primary/[0.02] focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-black text-xs uppercase tracking-widest appearance-none cursor-pointer italic"
              >
                <option value="ALL">Semua Wilayah</option>
                {MEDAN_REGIONS.map(reg => <option key={reg} value={reg}>{reg}</option>)}
              </select>
+             <ChevronDown className="absolute right-8 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
         </div>
       </div>

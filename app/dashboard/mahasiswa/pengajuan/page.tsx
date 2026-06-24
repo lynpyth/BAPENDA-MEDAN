@@ -17,9 +17,13 @@ import {
   Plus,
   ArrowRight,
   Loader2,
-  FileText
+  FileText,
+  X
 } from "lucide-react";
 import { useToast } from "@/lib/hooks/use-toast";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 interface ResearchRequest {
   id: string;
@@ -28,6 +32,10 @@ interface ResearchRequest {
   status: string;
   createdAt: string;
   institution: string;
+  description?: string;
+  supervisorName?: string;
+  dataNeeded?: string;
+  purpose?: string;
 }
 
 export default function PengajuanRisetPage() {
@@ -38,6 +46,7 @@ export default function PengajuanRisetPage() {
   const [showForm, setShowForm] = useState(false);
   const [myRequests, setMyRequests] = useState<ResearchRequest[]>([]);
   const [fetching, setFetching] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState<ResearchRequest | null>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -183,9 +192,12 @@ export default function PengajuanRisetPage() {
                            </div>
                         </div>
                      </div>
-                     <button className="p-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] text-zinc-300 group-hover:text-primary transition-all">
-                        <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
-                     </button>
+                      <button 
+                         onClick={() => setSelectedRequest(req)}
+                         className="p-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] text-zinc-300 hover:text-primary transition-all cursor-pointer"
+                      >
+                         <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
+                      </button>
                   </div>
                 ))
               )}
@@ -351,6 +363,84 @@ export default function PengajuanRisetPage() {
                 )}
               </div>
            </form>
+        </div>
+      )}
+      {/* ── Detail Modal ── */}
+      {selectedRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-sm p-6 animate-in fade-in duration-300 text-left">
+           <Card padding="none" className="bg-white rounded-[3rem] shadow-2xl w-full max-w-lg border border-zinc-100 animate-in zoom-in-95 duration-300 relative p-8">
+              <div className="flex items-start justify-between mb-6">
+                 <div>
+                    <span className="text-[10px] font-black uppercase text-zinc-400">Rincian Pengajuan Riset Anda</span>
+                    <h3 className="text-2xl font-black italic tracking-tighter uppercase text-zinc-900 mt-1">{selectedRequest.requestNumber}</h3>
+                 </div>
+                 <button onClick={() => setSelectedRequest(null)} className="p-3 bg-zinc-50 text-zinc-400 rounded-full hover:bg-zinc-100 shadow-inner transition-all">
+                    <X className="w-4 h-4" />
+                 </button>
+              </div>
+
+              <div className="space-y-4 text-xs font-bold">
+                 <div className="bg-zinc-50 p-4 rounded-2xl space-y-1">
+                    <p className="text-[9px] font-black uppercase text-zinc-400">Judul Riset / Penelitian</p>
+                    <p className="text-zinc-900 font-black text-sm">{selectedRequest.title}</p>
+                 </div>
+
+                 {selectedRequest.description && (
+                    <div className="bg-zinc-50 p-4 rounded-2xl space-y-1">
+                       <p className="text-[9px] font-black uppercase text-zinc-400">Deskripsi / Abstrak</p>
+                       <p className="text-zinc-650 font-medium font-sans leading-relaxed">{selectedRequest.description}</p>
+                    </div>
+                 )}
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-zinc-50 p-4 rounded-2xl">
+                       <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Institusi / Kampus</p>
+                       <p className="text-zinc-800 text-xs font-black uppercase tracking-wider">{selectedRequest.institution}</p>
+                    </div>
+                    <div className="bg-zinc-50 p-4 rounded-2xl">
+                       <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Dosen Pembimbing</p>
+                       <p className="text-zinc-800 text-xs font-black">{selectedRequest.supervisorName || "—"}</p>
+                    </div>
+                 </div>
+
+                 {selectedRequest.dataNeeded && (
+                    <div className="bg-zinc-50 p-4 rounded-2xl space-y-1">
+                       <p className="text-[9px] font-black uppercase text-zinc-400">Data Yang Dibutuhkan</p>
+                       <p className="text-zinc-700 font-medium font-sans leading-relaxed">{selectedRequest.dataNeeded}</p>
+                    </div>
+                 )}
+
+                 {selectedRequest.purpose && (
+                    <div className="bg-zinc-50 p-4 rounded-2xl space-y-1">
+                       <p className="text-[9px] font-black uppercase text-zinc-400">Tujuan Penelitian</p>
+                       <p className="text-zinc-700 font-medium font-sans leading-relaxed">{selectedRequest.purpose}</p>
+                    </div>
+                 )}
+
+                 <div className="bg-zinc-50 p-4 rounded-2xl space-y-2">
+                    <p className="text-[9px] font-black uppercase text-zinc-400">Status Pengajuan</p>
+                    <div className="flex items-center gap-2">
+                       <span className={cn(
+                          "px-4 py-1.5 rounded-full text-[9px] font-black border leading-none uppercase tracking-widest",
+                          statusBadge[selectedRequest.status] || "bg-zinc-150"
+                       )}>
+                          {selectedRequest.status}
+                       </span>
+                    </div>
+                 </div>
+
+                 <div className="bg-zinc-50 p-4 rounded-2xl">
+                    <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Tanggal Diajukan</p>
+                    <p className="text-zinc-500 font-medium font-sans">{new Date(selectedRequest.createdAt).toLocaleString("id-ID")}</p>
+                 </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                 <Button onClick={() => setSelectedRequest(null)} className="flex-1 h-12 bg-primary text-white rounded-2xl font-black uppercase text-[10px] tracking-widest">
+                    Tutup Rincian
+                 </Button>
+              </div>
+           </Card>
         </div>
       )}
     </div>

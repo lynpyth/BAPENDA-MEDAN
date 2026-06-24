@@ -52,6 +52,7 @@ export default function PengaduanPage() {
   const [activeRespon, setActiveRespon] = useState<string | null>(null);
   const [responContent, setResponContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   
   const role = (session?.user as { role: string })?.role ?? "USER";
   const isAdminOrOfficer = ["ADMIN", "OFFICER"].includes(role);
@@ -249,11 +250,14 @@ export default function PengaduanPage() {
                           </div>
 
                           <div className="flex flex-col items-end gap-6 shrink-0">
-                             <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic text-right leading-none group-hover:text-primary transition-colors">Arrived On: <br/> {new Date(c.createdAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</p>
-                             <div className="w-14 h-14 bg-zinc-50 border border-zinc-100 rounded-2xl flex items-center justify-center text-zinc-200 group-hover:bg-primary group-hover:text-white group-hover:rotate-12 transition-all shadow-inner">
-                                <ArrowRight className="w-6 h-6" />
-                             </div>
-                          </div>
+                              <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic text-right leading-none group-hover:text-primary transition-colors">Arrived On: <br/> {new Date(c.createdAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                              <button 
+                                 onClick={() => setSelectedComplaint(c)}
+                                 className="w-14 h-14 bg-zinc-50 border border-zinc-100 rounded-2xl flex items-center justify-center text-zinc-200 hover:scale-105 group-hover:bg-primary group-hover:text-white group-hover:rotate-12 transition-all shadow-inner cursor-pointer"
+                              >
+                                 <ArrowRight className="w-6 h-6" />
+                              </button>
+                           </div>
                        </div>
                     </div>
                   );
@@ -261,6 +265,88 @@ export default function PengaduanPage() {
             )}
          </div>
       </div>
+
+       {/* ── Detail Modal ── */}
+       {selectedComplaint && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-sm p-6 animate-in fade-in duration-300 text-left">
+            <Card padding="none" className="bg-white rounded-[3rem] shadow-2xl w-full max-w-lg border border-zinc-100 animate-in zoom-in-95 duration-300 relative p-8">
+               <div className="flex items-start justify-between mb-6">
+                  <div>
+                     <span className="text-[10px] font-black uppercase text-zinc-400">Rincian Pengaduan / Keluhan</span>
+                     <h3 className="text-2xl font-black italic tracking-tighter uppercase text-zinc-900 mt-1">{selectedComplaint.ticketNumber}</h3>
+                  </div>
+                  <button onClick={() => setSelectedComplaint(null)} className="p-3 bg-zinc-50 text-zinc-400 rounded-full hover:bg-zinc-100 shadow-inner transition-all">
+                     <X className="w-4 h-4" />
+                  </button>
+               </div>
+
+               <div className="space-y-4 text-xs font-bold">
+                  <div className="bg-zinc-50 p-4 rounded-2xl space-y-1">
+                     <p className="text-[9px] font-black uppercase text-zinc-400">Subjek Aduan</p>
+                     <p className="text-zinc-900 font-black text-sm">{selectedComplaint.subject}</p>
+                  </div>
+
+                  <div className="bg-zinc-50 p-4 rounded-2xl space-y-1">
+                     <p className="text-[9px] font-black uppercase text-zinc-400">Deskripsi Masalah</p>
+                     <p className="text-zinc-650 font-medium font-sans leading-relaxed">{selectedComplaint.description}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="bg-zinc-50 p-4 rounded-2xl">
+                        <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Kategori Masalah</p>
+                        <p className="text-zinc-800 text-xs font-black uppercase tracking-wider">{CATEGORIES.find(cat => cat.id === selectedComplaint.category)?.label || selectedComplaint.category}</p>
+                     </div>
+                     <div className="bg-zinc-50 p-4 rounded-2xl">
+                        <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Prioritas</p>
+                        <p className={cn(
+                           "text-xs font-black uppercase tracking-wider",
+                           selectedComplaint.priority === "HIGH" ? "text-red-500" :
+                           selectedComplaint.priority === "NORMAL" ? "text-amber-500" : "text-zinc-500"
+                        )}>{selectedComplaint.priority}</p>
+                     </div>
+                  </div>
+
+                  <div className="bg-zinc-50 p-4 rounded-2xl space-y-2">
+                     <p className="text-[9px] font-black uppercase text-zinc-400">Status Aduan</p>
+                     <div className="flex items-center gap-2">
+                        <span className={cn(
+                           "px-4 py-1.5 rounded-full text-[9px] font-black border leading-none uppercase tracking-widest",
+                           statusConfig[selectedComplaint.status as keyof typeof statusConfig]?.color || "bg-zinc-150"
+                        )}>
+                           {statusConfig[selectedComplaint.status as keyof typeof statusConfig]?.label || selectedComplaint.status}
+                        </span>
+                     </div>
+                  </div>
+
+                  {selectedComplaint.response && (
+                     <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl space-y-1">
+                        <p className="text-[9px] font-black uppercase text-emerald-700">Respon Resmi Petugas</p>
+                        <p className="text-emerald-800 text-xs font-bold leading-relaxed">&quot;{selectedComplaint.response}&quot;</p>
+                        {selectedComplaint.responseAt && (
+                           <p className="text-[8px] text-emerald-600 font-sans mt-1">Diberikan pada: {new Date(selectedComplaint.responseAt).toLocaleString("id-ID")}</p>
+                        )}
+                     </div>
+                  )}
+
+                  <div className="bg-zinc-50 p-4 rounded-2xl">
+                     <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Pengaju / Pelapor</p>
+                     <p className="text-zinc-800 text-xs font-black">
+                        {selectedComplaint.isAnonymous ? "Anonim (Dirahasiakan)" : (selectedComplaint.user?.name || "—")}
+                     </p>
+                     {!selectedComplaint.isAnonymous && selectedComplaint.user?.email && (
+                        <p className="text-zinc-400 text-[10px] font-medium font-sans mt-0.5">{selectedComplaint.user.email}</p>
+                     )}
+                  </div>
+               </div>
+
+               <div className="mt-8 flex gap-3">
+                  <Button onClick={() => setSelectedComplaint(null)} className="flex-1 h-12 bg-primary text-white rounded-2xl font-black uppercase text-[10px] tracking-widest">
+                     Tutup Rincian
+                  </Button>
+               </div>
+            </Card>
+         </div>
+       )}
 
       {/* ── Submit Modal (For User) ── */}
       {showForm && (

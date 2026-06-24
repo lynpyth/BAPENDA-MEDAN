@@ -13,6 +13,10 @@
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
 
+  --color-success: hsl(var(--success));
+  --color-warning: hsl(var(--warning));
+  --color-danger: hsl(var(--danger));
+
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
 
@@ -65,11 +69,15 @@
     --popover: 0 0% 100%;
     --popover-foreground: 226 25% 15%;
     
-    --primary: 226 100% 24%; /* Navy Blue */
+    --primary: 224 71% 40%; /* Biru Bapenda #1E40AF */
     --primary-foreground: 210 40% 98%;
     
-    --secondary: 32 95% 44%; /* Vibrant Orange Accent */
+    --secondary: 217 91% 60%; /* Secondary Blue #3B82F6 */
     --secondary-foreground: 0 0% 100%;
+
+    --success: 161 84% 39%; /* Success Green #10B981 */
+    --warning: 38 93% 50%; /* Warning Orange #F59E0B */
+    --danger: 0 84% 60%; /* Danger Red #EF4444 */
     
     --muted: 210 40% 96%;
     --muted-foreground: 215 25% 27%;
@@ -77,12 +85,12 @@
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
     
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 60%; /* Maps to Danger */
     --destructive-foreground: 210 40% 98%;
     
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --ring: 224 71% 40%;
     
     --radius: 1.5rem;
   }
@@ -193,39 +201,54 @@
 /* ── Premium Leaflet Marker Styles ── */
 .premium-marker {
   position: relative;
+  background: transparent !important;
+  border: none !important;
 }
 
 .marker-pulse {
   position: absolute;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  margin: -16px 0 0 -16px;
   animation: pulse-marker 1.8s infinite ease-out;
 }
 
 @keyframes pulse-marker {
   0% {
-    transform: translate(-50%, -50%) scale(0.6);
+    transform: scale(0.5);
     opacity: 1;
   }
   100% {
-    transform: translate(-50%, -50%) scale(1.6);
+    transform: scale(2.0);
     opacity: 0;
   }
 }
 
 .marker-pin {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  width: 24px;
+  height: 24px;
+  border-radius: 50% 50% 50% 0;
+  border: 2.5px solid white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  margin: -11px 0 0 -12px;
+  transform: rotate(-45deg);
+}
+
+.marker-pin::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: white;
+  position: absolute;
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  margin: -4px 0 0 -4px;
 }
 

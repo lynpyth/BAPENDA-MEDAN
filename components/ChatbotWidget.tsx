@@ -180,7 +180,7 @@ export function ChatbotWidget() {
         <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl flex items-center justify-center shadow-md shadow-primary/5 overflow-hidden p-1.5 relative">
-              <Image src="/logo.png" alt="Bapenda Logo" fill className="object-contain p-1" />
+              <Image src="/logo.png" alt="Bapenda Logo" fill sizes="40px" className="object-contain p-1" />
             </div>
             <div>
               <h4 className="text-sm font-black text-zinc-800 dark:text-zinc-100 leading-none">Asisten Pajak Daerah</h4>

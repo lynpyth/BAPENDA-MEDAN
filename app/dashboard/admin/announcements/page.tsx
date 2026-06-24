@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { 
   Megaphone, Plus, Search, 
   MoreVertical, Edit, Trash2, 
   ToggleLeft, ToggleRight, 
-  Calendar, User, AlertCircle, Loader2, X
+  Calendar, User, AlertCircle, Loader2, X, ChevronDown
 } from "lucide-react";
 import { useToast } from "@/lib/hooks/use-toast";
 
@@ -20,9 +22,26 @@ interface Announcement {
 }
 
 export default function AnnouncementsAdminPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated" && (session?.user as any)?.role !== "ADMIN") {
+      router.replace("/dashboard");
+    }
+  }, [session, status, router]);
+
   const { toast } = useToast();
   const [data, setData] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+
+  if (status === "loading" || (session?.user as any)?.role !== "ADMIN") {
+     return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+           <Loader2 className="w-12 h-12 text-[#1E40AF] animate-spin" />
+        </div>
+     );
+  }
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Announcement | null>(null);
@@ -253,17 +272,20 @@ export default function AnnouncementsAdminPage() {
                     </div>
                     <div className="space-y-4">
                        <label className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 italic pl-6 leading-none">Kategori Konten</label>
-                       <select 
-                        className="w-full px-8 py-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] focus:ring-4 focus:ring-primary/10 outline-none transition-all font-black text-xs uppercase tracking-widest italic shadow-inner appearance-none cursor-pointer"
-                        value={form.category}
-                        onChange={e => setForm({...form, category: e.target.value})}
-                       >
-                          <option>Pajak PBB</option>
-                          <option>Pajak BPHTB</option>
-                          <option>Info Sistem</option>
-                          <option>Kebijakan Baru</option>
-                          <option>Lainnya</option>
-                       </select>
+                       <div className="relative">
+                          <select 
+                           className="w-full pl-8 pr-12 py-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] focus:ring-4 focus:ring-primary/10 outline-none transition-all font-black text-xs uppercase tracking-widest italic shadow-inner appearance-none cursor-pointer"
+                           value={form.category}
+                           onChange={e => setForm({...form, category: e.target.value})}
+                          >
+                             <option>Pajak PBB</option>
+                             <option>Pajak BPHTB</option>
+                             <option>Info Sistem</option>
+                             <option>Kebijakan Baru</option>
+                             <option>Lainnya</option>
+                          </select>
+                          <ChevronDown className="absolute right-8 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                       </div>
                     </div>
                  </div>
 

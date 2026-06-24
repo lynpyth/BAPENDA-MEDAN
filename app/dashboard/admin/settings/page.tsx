@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { 
   Settings, 
   Database, 
@@ -24,9 +26,26 @@ import { cn } from "@/lib/utils";
 type ActiveTab = "SYSTEM" | "USER" | "TAX" | "NOTIFICATION";
 
 export default function AdminSettingsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated" && (session?.user as any)?.role !== "ADMIN") {
+      router.replace("/dashboard");
+    }
+  }, [session, status, router]);
+
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<ActiveTab>("SYSTEM");
   const [saving, setSaving] = useState(false);
+
+  if (status === "loading" || (session?.user as any)?.role !== "ADMIN") {
+     return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+           <Loader2 className="w-12 h-12 text-[#1E40AF] animate-spin" />
+        </div>
+     );
+  }
 
   // System Configuration State
   const [sysConfig, setSysConfig] = useState({
@@ -136,7 +155,7 @@ export default function AdminSettingsPage() {
 
         {/* Right Side Settings Panel */}
         <div className="flex-1">
-          <Card padding="lg" className="bg-white border border-zinc-100 rounded-[3.5rem] shadow-xl shadow-primary/[0.02]">
+          <Card padding="lg" className="bg-white border border-zinc-100 rounded-[3.5rem] shadow-xl shadow-primary/[0.02] overflow-visible relative z-30">
             
             {/* Tab 1: System Settings */}
             {activeTab === "SYSTEM" && (

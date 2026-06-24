@@ -16,7 +16,7 @@ export const FileUpload = ({ endpoint, value, onChange }: FileUploadProps) => {
   if (value && endpoint !== "researchDocument") {
     return (
       <div className="relative h-40 w-40">
-        <Image fill src={value} alt="Upload" className="rounded-2xl object-cover border-2 border-primary/20" />
+        <Image fill src={value} alt="Upload" sizes="160px" className="rounded-2xl object-cover border-2 border-primary/20" />
         <button
           onClick={() => onChange("")}
           className="bg-red-500 text-white p-1.5 rounded-full absolute -top-2 -right-2 shadow-lg hover:scale-110 transition-transform"

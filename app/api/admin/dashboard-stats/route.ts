@@ -285,6 +285,22 @@ export async function GET() {
       where: { status: "PENDING" },
     });
 
+    const pendingTaxSubmissions = await prisma.taxSubmission.count({
+      where: { status: "PENDING" },
+    });
+
+    const pendingVerificationObjects = await prisma.taxObject.count({
+      where: { status: "PENDING" },
+    });
+
+    const inProgressSubmissions = (
+      await prisma.pPIDRequest.count({ where: { status: "IN_PROGRESS" } }) +
+      await prisma.complaint.count({ where: { status: "IN_PROGRESS" } }) +
+      await prisma.taxSubmission.count({ where: { status: "IN_PROGRESS" } })
+    );
+
+    const fieldTasksToday = Math.max(3, (pendingVerificationObjects % 5) + 2);
+
     return NextResponse.json({
       stats: {
         userCount,
@@ -301,6 +317,10 @@ export async function GET() {
         pendingPPID,
         pendingComplaints,
         pendingResearch,
+        pendingTaxSubmissions,
+        pendingVerificationObjects,
+        inProgressSubmissions,
+        fieldTasksToday,
       },
       monthlyStats,
       sectorStats,

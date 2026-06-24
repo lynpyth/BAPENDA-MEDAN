@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
 
     // USER / DEVELOPER (student)
     const userId = session.user.id;
-    const [myObjects, myPayments] = await Promise.all([
+    const [myObjects, myPayments, spptCount, submissionActiveCount, mySubmissions] = await Promise.all([
       prisma.taxObject.findMany({
         where: { ownerId: userId },
         include: { payments: { take: 3, orderBy: { createdAt: "desc" } } },
@@ -69,9 +69,27 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: "desc" },
         include: { taxObject: { select: { nop: true, type: true, name: true } } },
       }),
+      prisma.sppt.count({
+        where: { userId },
+      }),
+      prisma.taxSubmission.count({
+        where: { userId, status: { in: ["PENDING", "IN_PROGRESS"] } },
+      }),
+      prisma.taxSubmission.findMany({
+        where: { userId },
+        take: 10,
+        orderBy: { createdAt: "desc" },
+      }),
     ]);
 
-    return NextResponse.json({ role, taxObjects: myObjects, payments: myPayments });
+    return NextResponse.json({ 
+      role, 
+      taxObjects: myObjects, 
+      payments: myPayments,
+      spptCount,
+      submissionActiveCount,
+      submissions: mySubmissions
+    });
   } catch (error) {
     console.error("[DASHBOARD_ERROR]", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

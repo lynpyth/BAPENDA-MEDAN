@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import {
   FileQuestion, Plus, CheckCircle, Clock, XCircle,
   X, Loader2, AlertCircle, ChevronRight, MessageSquare,
-  ShieldCheck, Star, Send, ArrowRight, User as UserIcon
+  ShieldCheck, Star, Send, ArrowRight, User as UserIcon, ChevronDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
@@ -51,6 +51,7 @@ export default function PPIDPage() {
   const [activeRespon, setActiveRespon] = useState<string | null>(null);
   const [responContent, setResponContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<PPIDRequest | null>(null);
   
   const role = (session?.user as { role: string })?.role ?? "USER";
   const isAdminOrOfficer = ["ADMIN", "OFFICER"].includes(role);
@@ -247,12 +248,15 @@ export default function PPIDPage() {
                              )}
                           </div>
 
-                          <div className="flex flex-col items-end gap-6 shrink-0">
-                             <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic text-right leading-none group-hover:text-primary transition-colors italic">Inscribed On: <br/> {new Date(r.createdAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</p>
-                             <div className="w-14 h-14 bg-zinc-50 border border-zinc-100 rounded-2xl flex items-center justify-center text-zinc-200 group-hover:bg-primary group-hover:text-white group-hover:rotate-12 transition-all shadow-inner">
-                                <ArrowRight className="w-6 h-6" />
-                             </div>
-                          </div>
+                           <div className="flex flex-col items-end gap-6 shrink-0">
+                              <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic text-right leading-none group-hover:text-primary transition-colors italic">Inscribed On: <br/> {new Date(r.createdAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                              <button 
+                                 onClick={() => setSelectedRequest(r)}
+                                 className="w-14 h-14 bg-zinc-50 border border-zinc-100 rounded-2xl flex items-center justify-center text-zinc-200 hover:scale-105 group-hover:bg-primary group-hover:text-white group-hover:rotate-12 transition-all shadow-inner cursor-pointer"
+                              >
+                                 <ArrowRight className="w-6 h-6" />
+                              </button>
+                           </div>
                        </div>
                     </div>
                   );
@@ -261,6 +265,84 @@ export default function PPIDPage() {
          </div>
       </div>
       
+      {/* ── Detail Modal ── */}
+       {selectedRequest && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-sm p-6 animate-in fade-in duration-300 text-left">
+            <Card padding="none" className="bg-white rounded-[3rem] shadow-2xl w-full max-w-lg border border-zinc-100 animate-in zoom-in-95 duration-300 relative p-8">
+               <div className="flex items-start justify-between mb-6">
+                  <div>
+                     <span className="text-[10px] font-black uppercase text-zinc-400">Rincian Permohonan Informasi</span>
+                     <h3 className="text-2xl font-black italic tracking-tighter uppercase text-zinc-900 mt-1">{selectedRequest.ticketNumber}</h3>
+                  </div>
+                  <button onClick={() => setSelectedRequest(null)} className="p-3 bg-zinc-50 text-zinc-400 rounded-full hover:bg-zinc-100 shadow-inner transition-all">
+                     <X className="w-4 h-4" />
+                  </button>
+               </div>
+
+               <div className="space-y-4 text-xs font-bold">
+                  <div className="bg-zinc-50 p-4 rounded-2xl space-y-1">
+                     <p className="text-[9px] font-black uppercase text-zinc-400">Subjek Permohonan</p>
+                     <p className="text-zinc-900 font-black text-sm">{selectedRequest.title}</p>
+                  </div>
+
+                  <div className="bg-zinc-50 p-4 rounded-2xl space-y-1">
+                     <p className="text-[9px] font-black uppercase text-zinc-400">Deskripsi Detail</p>
+                     <p className="text-zinc-650 font-medium font-sans leading-relaxed">{selectedRequest.description}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="bg-zinc-50 p-4 rounded-2xl">
+                        <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Tipe Informasi</p>
+                        <p className="text-zinc-800 text-xs font-black uppercase tracking-wider">{INFO_TYPES.find(t => t.id === selectedRequest.informationType)?.label || selectedRequest.informationType}</p>
+                     </div>
+                     <div className="bg-zinc-50 p-4 rounded-2xl">
+                        <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Tingkat Urgensi</p>
+                        <p className={cn(
+                           "text-xs font-black uppercase tracking-wider",
+                           selectedRequest.urgency === "HIGH" ? "text-red-500" :
+                           selectedRequest.urgency === "NORMAL" ? "text-amber-500" : "text-zinc-500"
+                        )}>{selectedRequest.urgency}</p>
+                     </div>
+                  </div>
+
+                  <div className="bg-zinc-50 p-4 rounded-2xl space-y-2">
+                     <p className="text-[9px] font-black uppercase text-zinc-400">Status Permohonan</p>
+                     <div className="flex items-center gap-2">
+                        <span className={cn(
+                           "px-4 py-1.5 rounded-full text-[9px] font-black border leading-none uppercase tracking-widest",
+                           statusConfig[selectedRequest.status as keyof typeof statusConfig]?.color || "bg-zinc-150"
+                        )}>
+                           {statusConfig[selectedRequest.status as keyof typeof statusConfig]?.label || selectedRequest.status}
+                        </span>
+                     </div>
+                  </div>
+
+                  {selectedRequest.response && (
+                     <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl space-y-1">
+                        <p className="text-[9px] font-black uppercase text-emerald-700">Respon Resmi PPID</p>
+                        <p className="text-emerald-800 text-xs font-bold leading-relaxed">&quot;{selectedRequest.response}&quot;</p>
+                        {selectedRequest.responseAt && (
+                           <p className="text-[8px] text-emerald-600 font-sans mt-1">Diberikan pada: {new Date(selectedRequest.responseAt).toLocaleString("id-ID")}</p>
+                        )}
+                     </div>
+                  )}
+
+                  <div className="bg-zinc-50 p-4 rounded-2xl">
+                     <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Pemohon / Pengaju</p>
+                     <p className="text-zinc-800 text-xs font-black">{selectedRequest.user?.name || "—"}</p>
+                     <p className="text-zinc-400 text-[10px] font-medium font-sans mt-0.5">{selectedRequest.user?.email || ""}</p>
+                  </div>
+               </div>
+
+               <div className="mt-8 flex gap-3">
+                  <Button onClick={() => setSelectedRequest(null)} className="flex-1 h-12 bg-primary text-white rounded-2xl font-black uppercase text-[10px] tracking-widest">
+                     Tutup Rincian
+                  </Button>
+               </div>
+            </Card>
+         </div>
+       )}
+
       {/* ── Submit Modal (For User) ── */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-sm p-6 animate-in fade-in duration-500 text-left">
@@ -286,13 +368,16 @@ export default function PPIDPage() {
                  </div>
                  <div className="space-y-4">
                     <label className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 italic pl-6 leading-none">Grup Informasi</label>
-                    <select
-                      className="w-full px-8 py-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] focus:ring-4 focus:ring-primary/10 outline-none transition-all font-black text-[10px] uppercase tracking-[0.2em] italic shadow-inner appearance-none cursor-pointer"
-                      value={form.informationType}
-                      onChange={e => setForm({...form, informationType: e.target.value})}
-                    >
-                      {INFO_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-                    </select>
+                    <div className="relative">
+                       <select
+                         className="w-full pl-8 pr-12 py-6 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] focus:ring-4 focus:ring-primary/10 outline-none transition-all font-black text-[10px] uppercase tracking-[0.2em] italic shadow-inner appearance-none cursor-pointer"
+                         value={form.informationType}
+                         onChange={e => setForm({...form, informationType: e.target.value})}
+                       >
+                         {INFO_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                       </select>
+                       <ChevronDown className="absolute right-8 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                    </div>
                  </div>
                  <div className="space-y-4">
                     <label className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 italic pl-6 leading-none">Deskripsi Narasi</label>

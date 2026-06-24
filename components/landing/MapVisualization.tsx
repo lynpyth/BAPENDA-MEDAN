@@ -35,7 +35,8 @@ export function MapVisualization() {
   const [data, setData] = useState<TaxPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<TaxPoint | null>(null);
-  const [customIcon, setCustomIcon] = useState<DivIcon | undefined>(undefined);
+  const [compliantIcon, setCompliantIcon] = useState<DivIcon | undefined>(undefined);
+  const [nonCompliantIcon, setNonCompliantIcon] = useState<DivIcon | undefined>(undefined);
 
   // Center of Medan
   const center: [number, number] = [3.595, 98.672];
@@ -43,13 +44,20 @@ export function MapVisualization() {
   useEffect(() => {
     // Import Leaflet directly for Icon creation (Client-only)
     import("leaflet").then((L) => {
-      const icon = L.divIcon({
+      const gIcon = L.divIcon({
         className: "premium-marker",
-        html: `<div class="marker-pulse"></div><div class="marker-pin" style="background-color: var(--primary)"></div>`,
-        iconSize: [30, 42],
-        iconAnchor: [15, 42],
+        html: `<div class="marker-pulse bg-emerald-500/20"></div><svg class="absolute left-0 top-0 w-[26px] h-[36px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35));"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#10b981" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" fill="#ffffff"/></svg>`,
+        iconSize: [26, 36],
+        iconAnchor: [13, 36],
       });
-      setCustomIcon(icon);
+      const rIcon = L.divIcon({
+        className: "premium-marker",
+        html: `<div class="marker-pulse bg-rose-500/20"></div><svg class="absolute left-0 top-0 w-[26px] h-[36px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35));"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#f43f5e" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" fill="#ffffff"/></svg>`,
+        iconSize: [26, 36],
+        iconAnchor: [13, 36],
+      });
+      setCompliantIcon(gIcon);
+      setNonCompliantIcon(rIcon);
     });
 
     fetch("/api/gis")
@@ -185,36 +193,48 @@ export function MapVisualization() {
              ))}
 
              {/* Markers */}
-             {data.map((point) => (
-                <Marker 
-                  key={point.id} 
-                  position={[point.lat, point.lng]}
-                  icon={customIcon}
-                  eventHandlers={{
-                    click: () => setSelected(point),
-                  }}
-                >
-                  <Popup>
-                    <div className="p-4 space-y-2 text-left">
-                       <div className="flex items-center gap-2 mb-2">
-                          <div className={cn("w-2 h-2 rounded-full", point.isCompliant ? "bg-emerald-500" : "bg-rose-500")} />
-                          <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Objek Pajak Medan</p>
+             {data.map((point) => {
+                const icon = point.isCompliant ? compliantIcon : nonCompliantIcon;
+                if (!icon) return null;
+                return (
+                   <Marker 
+                     key={point.id} 
+                     position={[point.lat, point.lng]}
+                     icon={icon}
+                     eventHandlers={{
+                       click: () => setSelected(point),
+                     }}
+                   >
+                     <Popup>
+                       <div className="p-4 space-y-2 text-left">
+                          <div className="flex items-center gap-2 mb-2">
+                             <div className={cn("w-2 h-2 rounded-full", point.isCompliant ? "bg-emerald-500" : "bg-rose-500")} />
+                             <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Objek Pajak Medan</p>
+                          </div>
+                          <p className="font-black text-lg italic tracking-tight text-zinc-900 leading-none uppercase">{point.name}</p>
+                          <p className="text-[10px] font-bold text-primary font-mono tracking-tighter">{point.nop}</p>
                        </div>
-                       <p className="font-black text-lg italic tracking-tight text-zinc-900 leading-none uppercase">{point.name}</p>
-                       <p className="text-[10px] font-bold text-primary font-mono tracking-tighter">{point.nop}</p>
-                    </div>
-                  </Popup>
-                </Marker>
-             ))}
+                     </Popup>
+                   </Marker>
+                );
+             })}
           </MapContainer>
 
           {/* Floating Legend */}
           <div className="absolute top-10 left-10 z-[400] space-y-4 pointer-events-none">
             <div className="flex items-center gap-4 px-8 py-4 bg-white/90 backdrop-blur-xl rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl border border-zinc-100 italic transition-all group pointer-events-auto cursor-default">
-              <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse" /> Zone Kepatuhan Tinggi
+              <svg className="w-3 h-4 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}>
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#10b981" stroke="#ffffff" strokeWidth="1.5" strokeLinejoin="round"/>
+                <circle cx="12" cy="9" r="2.5" fill="#ffffff"/>
+              </svg>
+              Zone Kepatuhan Tinggi
             </div>
             <div className="flex items-center gap-4 px-8 py-4 bg-white/90 backdrop-blur-xl rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl border border-zinc-100 italic transition-all group pointer-events-auto cursor-default">
-              <div className="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.5)] animate-pulse" /> Zone Tunggakan Aktif
+              <svg className="w-3 h-4 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}>
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#f43f5e" stroke="#ffffff" strokeWidth="1.5" strokeLinejoin="round"/>
+                <circle cx="12" cy="9" r="2.5" fill="#ffffff"/>
+              </svg>
+              Zone Tunggakan Aktif
             </div>
           </div>
         </div>

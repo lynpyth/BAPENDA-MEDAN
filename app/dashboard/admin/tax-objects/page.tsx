@@ -19,7 +19,8 @@ import {
   Download,
   Calendar,
   Clock,
-  FileText
+  FileText,
+  ChevronDown
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -315,7 +316,7 @@ export default function AdminTaxObjectsPage() {
       </div>
 
       {/* ── Quick Controls & Filters ── */}
-      <div className="flex flex-col gap-6 pt-6 bg-zinc-50/50 p-8 rounded-[3rem] border border-zinc-100 shadow-inner">
+      <div className="flex flex-col gap-6 pt-6 bg-zinc-50/50 p-8 rounded-[3rem] border border-zinc-100 shadow-inner relative z-30 overflow-visible">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Quick Search */}
           <div className="md:col-span-4 relative group">
@@ -336,13 +337,14 @@ export default function AdminTaxObjectsPage() {
                 setFilterKecamatan(e.target.value);
                 setFilterKelurahan("ALL"); // Reset kelurahan
               }}
-              className="w-full h-18 px-6 bg-white border border-zinc-150 rounded-[2rem] text-xs font-black uppercase tracking-widest text-zinc-700 outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer shadow-sm appearance-none"
+              className="w-full h-18 pl-6 pr-12 bg-white border border-zinc-150 rounded-[2rem] text-xs font-black uppercase tracking-widest text-zinc-700 outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer shadow-sm appearance-none"
             >
               <option value="ALL">SEMUA KECAMATAN</option>
               {Object.keys(KELURAHANS).map(k => (
                 <option key={k} value={k}>{k.toUpperCase()}</option>
               ))}
             </select>
+            <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
 
           {/* Kelurahan Filter */}
@@ -351,13 +353,14 @@ export default function AdminTaxObjectsPage() {
               value={filterKelurahan}
               onChange={(e) => setFilterKelurahan(e.target.value)}
               disabled={filterKecamatan === "ALL"}
-              className="w-full h-18 px-6 bg-white border border-zinc-150 rounded-[2rem] text-xs font-black uppercase tracking-widest text-zinc-700 outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer shadow-sm appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-18 pl-6 pr-12 bg-white border border-zinc-150 rounded-[2rem] text-xs font-black uppercase tracking-widest text-zinc-700 outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer shadow-sm appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="ALL">SEMUA KELURAHAN</option>
               {filterKecamatan !== "ALL" && KELURAHANS[filterKecamatan]?.map(k => (
                 <option key={k} value={k}>{k.toUpperCase()}</option>
               ))}
             </select>
+            <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
 
           {/* Type Filter */}
@@ -365,13 +368,14 @@ export default function AdminTaxObjectsPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="w-full h-18 px-6 bg-white border border-zinc-150 rounded-[2rem] text-xs font-black uppercase tracking-widest text-zinc-700 outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer shadow-sm appearance-none"
+              className="w-full h-18 pl-6 pr-12 bg-white border border-zinc-150 rounded-[2rem] text-xs font-black uppercase tracking-widest text-zinc-700 outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer shadow-sm appearance-none"
             >
               <option value="ALL">SEMUA TIPE</option>
               {uniqueTypes.map(t => (
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
+            <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
 
           {/* Status Filter */}
@@ -379,13 +383,14 @@ export default function AdminTaxObjectsPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full h-18 px-6 bg-white border border-zinc-150 rounded-[2rem] text-xs font-black uppercase tracking-widest text-zinc-700 outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer shadow-sm appearance-none"
+              className="w-full h-18 pl-6 pr-12 bg-white border border-zinc-150 rounded-[2rem] text-xs font-black uppercase tracking-widest text-zinc-700 outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer shadow-sm appearance-none"
             >
               <option value="ALL">SEMUA STATUS</option>
               <option value="PENDING">PENDING</option>
               <option value="VERIFIED">VERIFIED</option>
               <option value="REJECTED">REJECTED</option>
             </select>
+            <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
           </div>
         </div>
       </div>

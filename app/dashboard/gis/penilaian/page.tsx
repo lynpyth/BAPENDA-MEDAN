@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Scale, TrendingUp, TrendingDown, Clock, Search, HelpCircle, Save, Plus, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { Scale, TrendingUp, TrendingDown, Clock, Search, HelpCircle, Save, Plus, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/lib/hooks/use-toast";
@@ -53,11 +55,31 @@ interface Analytics {
 }
 
 export default function GeoPenilaianPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      const role = (session?.user as any)?.role;
+      if (role !== "ADMIN" && role !== "OFFICER") {
+        router.replace("/dashboard");
+      }
+    }
+  }, [session, status, router]);
+
   const { toast } = useToast();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [analytics, setAnalytics] = useState<Analytics>({ topIncreases: [], topDecreases: [] });
   const [objects, setObjects] = useState<TaxObject[]>([]);
   const [loading, setLoading] = useState(true);
+
+  if (status === "loading" || ((session?.user as any)?.role !== "ADMIN" && (session?.user as any)?.role !== "OFFICER")) {
+     return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+           <Loader2 className="w-12 h-12 text-[#1E40AF] animate-spin" />
+        </div>
+     );
+  }
 
   // Form Fields
   const [selectedObj, setSelectedObj] = useState<TaxObject | null>(null);

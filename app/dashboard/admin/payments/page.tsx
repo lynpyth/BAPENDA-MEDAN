@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CreditCard, Search, Calendar, CheckCircle, Clock, Info, ShieldCheck, ArrowRight, Download } from "lucide-react";
+import { CreditCard, Search, Calendar, CheckCircle, Clock, Info, ShieldCheck, ArrowRight, Download, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -38,6 +38,8 @@ export default function AdminPaymentsPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
 
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+
   useEffect(() => {
     fetch("/api/admin/payments")
       .then((r) => r.json())
@@ -61,7 +63,7 @@ export default function AdminPaymentsPage() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div>
-          <p className="text-primary font-black uppercase tracking-[0.2em] text-xs">Penerimaan Daerah</p>
+          <p className="text-primary font-black uppercase tracking-[0.2em] text-xs">Pendapatan Daerah</p>
           <h1 className="text-4xl font-black tracking-tighter mt-2 flex items-center gap-4">
             <CreditCard className="w-12 h-12 text-primary rotate-[-10deg]" /> Monitoring Transaksi
           </h1>
@@ -75,7 +77,7 @@ export default function AdminPaymentsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <SummaryCard label="Total Penerimaan" value={formatCurrency(totalAmount)} icon={<ShieldCheck />} color="green" />
+        <SummaryCard label="Total Pendapatan" value={formatCurrency(totalAmount)} icon={<ShieldCheck />} color="green" />
         <SummaryCard label="Menunggu Bayar" value={filtered.filter(p => p.status === "PENDING").length.toString()} icon={<Clock />} color="amber" />
         <SummaryCard label="Transaksi PAID" value={filtered.filter(p => p.status === "PAID").length.toString()} icon={<CheckCircle />} color="blue" />
         <SummaryCard label="Item Terdata" value={filtered.length.toString()} icon={<Info />} color="zinc" />
@@ -167,7 +169,7 @@ export default function AdminPaymentsPage() {
                          </div>
                       </td>
                       <td className="px-8 py-6 text-right">
-                         <Button variant="ghost" size="icon" className="hover:text-primary"><ArrowRight className="w-4 h-4" /></Button>
+                         <Button onClick={() => setSelectedPayment(p)} variant="ghost" size="icon" className="hover:text-primary"><ArrowRight className="w-4 h-4" /></Button>
                       </td>
                     </tr>
                   ))
@@ -177,6 +179,74 @@ export default function AdminPaymentsPage() {
           )}
         </div>
       </Card>
+
+      {/* Detail Modal */}
+      {selectedPayment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-sm p-6 animate-in fade-in duration-300 text-left">
+          <Card padding="none" className="bg-white rounded-[3rem] shadow-2xl w-full max-w-lg border border-zinc-100 animate-in zoom-in-95 duration-300 relative p-8">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <span className="text-[10px] font-black uppercase text-zinc-400">Rincian Transaksi</span>
+                <h3 className="text-2xl font-black italic tracking-tighter uppercase text-zinc-900 mt-1">{selectedPayment.invoiceNumber}</h3>
+              </div>
+              <button onClick={() => setSelectedPayment(null)} className="p-3 bg-zinc-50 text-zinc-400 rounded-full hover:bg-zinc-100 shadow-inner transition-all">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs font-bold">
+              <div className="bg-zinc-50 p-4 rounded-2xl space-y-2">
+                <p className="text-[9px] font-black uppercase text-zinc-400">Wajib Pajak</p>
+                <p className="text-zinc-900 font-black text-sm">{selectedPayment.user.name}</p>
+                <p className="text-zinc-500 font-medium font-sans leading-none">{selectedPayment.user.email}</p>
+              </div>
+
+              <div className="bg-zinc-50 p-4 rounded-2xl space-y-2">
+                <p className="text-[9px] font-black uppercase text-zinc-400">Objek Pajak</p>
+                <p className="text-zinc-900 font-black text-sm">{selectedPayment.taxObject.name}</p>
+                <p className="text-primary font-mono text-[10px]">NOP: {selectedPayment.taxObject.nop}</p>
+                <p className="text-zinc-500 font-medium font-sans leading-none">Tipe: {selectedPayment.taxObject.type}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-zinc-50 p-4 rounded-2xl">
+                  <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Masa Pajak</p>
+                  <p className="text-zinc-800 text-sm font-black italic">{selectedPayment.taxPeriod}</p>
+                </div>
+                <div className="bg-zinc-50 p-4 rounded-2xl">
+                  <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Total Pembayaran</p>
+                  <p className="text-amber-600 text-sm font-black">{formatCurrency(selectedPayment.amount)}</p>
+                </div>
+              </div>
+
+              <div className="bg-zinc-50 p-4 rounded-2xl space-y-2">
+                <p className="text-[9px] font-black uppercase text-zinc-400">Status Pembayaran</p>
+                <div className="flex items-center gap-2">
+                  <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border leading-none ${statusColor[selectedPayment.status] || "bg-zinc-100"}`}>
+                    {selectedPayment.status}
+                  </span>
+                  {selectedPayment.paidAt && (
+                    <span className="text-[10px] text-green-600 font-black">
+                      LUNAS PADA {new Date(selectedPayment.paidAt).toLocaleString("id-ID")}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-zinc-50 p-4 rounded-2xl">
+                <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Tanggal Tagihan Dibuat</p>
+                <p className="text-zinc-500 font-medium font-sans">{new Date(selectedPayment.createdAt).toLocaleString("id-ID")}</p>
+              </div>
+            </div>
+
+            <div className="mt-8 flex gap-3">
+              <Button onClick={() => setSelectedPayment(null)} className="flex-1 h-12 bg-primary text-white rounded-2xl font-black uppercase text-[10px] tracking-widest">
+                Tutup Rincian
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

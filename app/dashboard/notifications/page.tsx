@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { 
-  Bell, CheckCircle2, Info, AlertTriangle, 
+  Bell, CheckCircle2, Info, AlertTriangle, X,
   Loader2, ArrowRight, Clock,
   Check
 } from "lucide-react";
 import { useToast } from "@/lib/hooks/use-toast";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,7 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
   const [activeCategory, setActiveCategory] = useState<"SYSTEM" | "DASHBOARD">("SYSTEM");
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -216,7 +218,13 @@ export default function NotificationsPage() {
                
                <div className="flex items-center gap-6">
                   {!n.isRead && <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-glow" />}
-                  <button className="p-6 bg-zinc-50 border border-zinc-100 rounded-[2rem] text-zinc-300 group-hover:text-primary group-hover:bg-primary/5 transition-all">
+                  <button 
+                    onClick={() => {
+                       markAsRead(n.id);
+                       setSelectedNotification(n);
+                    }}
+                    className="p-6 bg-zinc-50 border border-zinc-100 rounded-[2rem] text-zinc-300 group-hover:text-primary group-hover:bg-primary/5 transition-all cursor-pointer"
+                  >
                      <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
                   </button>
                </div>
@@ -235,6 +243,58 @@ export default function NotificationsPage() {
             </p>
          </div>
       </div>
+      {/* ── Detail Modal ── */}
+      {selectedNotification && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-sm p-6 animate-in fade-in duration-300 text-left">
+           <Card padding="none" className="bg-white rounded-[3rem] shadow-2xl w-full max-w-lg border border-zinc-100 animate-in zoom-in-95 duration-300 relative p-8">
+              <div className="flex items-start justify-between mb-6">
+                 <div>
+                    <span className="text-[10px] font-black uppercase text-zinc-400">Notifikasi Sistem</span>
+                    <h3 className="text-2xl font-black italic tracking-tighter uppercase text-zinc-900 mt-1">{selectedNotification.title}</h3>
+                 </div>
+                 <button onClick={() => setSelectedNotification(null)} className="p-3 bg-zinc-50 text-zinc-400 rounded-full hover:bg-zinc-100 shadow-inner transition-all">
+                    <X className="w-4 h-4" />
+                 </button>
+              </div>
+
+              <div className="space-y-4 text-xs font-bold">
+                 <div className="bg-zinc-50 p-4 rounded-2xl space-y-1">
+                    <p className="text-[9px] font-black uppercase text-zinc-400">Pesan / Alert</p>
+                    <p className="text-zinc-650 font-medium font-sans leading-relaxed">&quot;{selectedNotification.message}&quot;</p>
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-zinc-50 p-4 rounded-2xl">
+                       <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Tipe Notifikasi</p>
+                       <span className={cn(
+                          "px-4 py-1.5 rounded-full text-[9px] font-black border leading-none uppercase tracking-widest inline-block mt-1",
+                          notificationStyles[selectedNotification.type]?.badge
+                       )}>
+                          {selectedNotification.type} ALERT
+                       </span>
+                    </div>
+                    <div className="bg-zinc-50 p-4 rounded-2xl">
+                       <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Kategori</p>
+                       <p className="text-zinc-800 text-xs font-black uppercase tracking-wider mt-1">{selectedNotification.category}</p>
+                    </div>
+                 </div>
+
+                 <div className="bg-zinc-50 p-4 rounded-2xl">
+                    <p className="text-[9px] font-black uppercase text-zinc-400 mb-1">Waktu Diterima</p>
+                    <p className="text-zinc-500 font-medium font-sans mt-0.5">
+                       {new Date(selectedNotification.createdAt).toLocaleString("id-ID", { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                 </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                 <Button onClick={() => setSelectedNotification(null)} className="flex-1 h-12 bg-primary text-white rounded-2xl font-black uppercase text-[10px] tracking-widest">
+                    Tutup Notifikasi
+                 </Button>
+              </div>
+           </Card>
+        </div>
+      )}
     </div>
   );
 }

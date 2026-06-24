@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { TrendingUp, DollarSign, Building, Percent, MapPin, Filter, BarChart3 } from "lucide-react";
+import { TrendingUp, DollarSign, Building, Percent, MapPin, Filter, BarChart3, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { PremiumChart } from "@/components/ui/PremiumChart";
 
@@ -39,9 +41,29 @@ interface Stats {
 }
 
 export default function PasarPropertiPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      const role = (session?.user as any)?.role;
+      if (role !== "ADMIN" && role !== "OFFICER") {
+        router.replace("/dashboard");
+      }
+    }
+  }, [session, status, router]);
+
   const [properties, setProperties] = useState<Property[]>([]);
   const [stats, setStats] = useState<Stats>({ avgMarketPrice: 0, avgNJOP: 0, pctDiff: 0 });
   const [loading, setLoading] = useState(true);
+
+  if (status === "loading" || ((session?.user as any)?.role !== "ADMIN" && (session?.user as any)?.role !== "OFFICER")) {
+     return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+           <Loader2 className="w-12 h-12 text-[#1E40AF] animate-spin" />
+        </div>
+     );
+  }
   
   const [typeFilter, setTypeFilter] = useState("");
   const [customIcon, setCustomIcon] = useState<DivIcon | undefined>(undefined);
@@ -50,7 +72,7 @@ export default function PasarPropertiPage() {
     import("leaflet").then((L) => {
       const icon = L.divIcon({
         className: "premium-marker",
-        html: `<div class="marker-pulse bg-blue-500/20"></div><div class="marker-pin" style="background-color: #3b82f6"></div>`,
+        html: `<div class="marker-pulse bg-blue-500/20"></div><svg class="absolute left-0 top-0 w-[26px] h-[36px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35));"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#3b82f6" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" fill="#ffffff"/></svg>`,
         iconSize: [26, 36],
         iconAnchor: [13, 36],
       });
@@ -151,7 +173,7 @@ export default function PasarPropertiPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar Controls */}
-        <Card className="lg:col-span-1 p-6 space-y-6 bg-white border border-zinc-100 rounded-[2.5rem] shadow-sm">
+        <Card className="lg:col-span-1 p-6 space-y-6 bg-white border border-zinc-100 rounded-[2.5rem] shadow-sm overflow-visible relative z-30">
           <h3 className="font-black italic uppercase text-sm tracking-widest flex items-center gap-2 text-primary"><Filter className="w-4 h-4" /> Filter Properti</h3>
           
           <div className="space-y-4">

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Layers, MapPin, TrendingUp, TrendingDown, Landmark, Map as MapIcon, Filter } from "lucide-react";
+import { Layers, MapPin, TrendingUp, TrendingDown, Landmark, Map as MapIcon, Filter, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 
 import type { MapContainerProps, TileLayerProps, PolygonProps, PopupProps } from "react-leaflet";
@@ -28,9 +30,29 @@ interface Zone {
 }
 
 export default function ZNTPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      const role = (session?.user as any)?.role;
+      if (role !== "ADMIN" && role !== "OFFICER") {
+        router.replace("/dashboard");
+      }
+    }
+  }, [session, status, router]);
+
   const [zones, setZones] = useState<Zone[]>([]);
   const [loading, setLoading] = useState(true);
   const [districtFilter, setDistrictFilter] = useState("");
+
+  if (status === "loading" || ((session?.user as any)?.role !== "ADMIN" && (session?.user as any)?.role !== "OFFICER")) {
+     return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+           <Loader2 className="w-12 h-12 text-[#1E40AF] animate-spin" />
+        </div>
+     );
+  }
 
   useEffect(() => {
     fetch("/api/gis/znt")
@@ -139,7 +161,7 @@ export default function ZNTPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar Controls */}
-        <Card className="lg:col-span-1 p-6 space-y-6 bg-white border border-zinc-100 rounded-[2.5rem] shadow-sm">
+        <Card className="lg:col-span-1 p-6 space-y-6 bg-white border border-zinc-100 rounded-[2.5rem] shadow-sm overflow-visible relative z-30">
           <h3 className="font-black italic uppercase text-sm tracking-widest flex items-center gap-2 text-primary"><Filter className="w-4 h-4" /> Filter Wilayah</h3>
           
           <div className="space-y-4">

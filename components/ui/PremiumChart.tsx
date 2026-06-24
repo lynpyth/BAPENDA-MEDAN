@@ -44,7 +44,7 @@ export function PremiumChart({ data, title, subtitle, className }: PremiumChartP
             return (
               <div
                 key={i}
-                className="flex-1 flex flex-col items-center justify-end gap-2 min-w-[50px] group/item h-full"
+                className="flex-1 flex flex-col items-center justify-end gap-2 min-w-[50px] group/item h-full relative hover:z-30"
               >
                 <div className="relative w-full flex flex-col items-center justify-end flex-1">
                   {/* ── Value Tooltip ── */}

@@ -128,7 +128,7 @@ export default function AdminSubmissionsPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <Card padding="md" className="bg-white border-zinc-100 shadow-xl shadow-zinc-100/50">
+      <Card padding="md" className="bg-white border-zinc-100 shadow-xl shadow-zinc-100/50 overflow-visible relative z-30">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
