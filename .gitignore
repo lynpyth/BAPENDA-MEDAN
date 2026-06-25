@@ -30,6 +30,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# kilocode IDE
+.kilocode/
+
+# old subdirectory (leftover node_modules)
+/bapenda-medan/
+
 # env files (can opt-in for committing if needed)
 .env*
 

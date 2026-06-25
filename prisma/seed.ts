@@ -107,102 +107,104 @@ async function main() {
   const mhsPw = await bcrypt.hash("mahasiswa123", 12);
   const devPw = await bcrypt.hash("dev123", 12);
 
-  const superAdmin = await prisma.user.create({
-    data: {
-      id: "superadmin-id",
+  const superAdmin = await prisma.user.upsert({
+    where: { email: "superadmin@bapenda.medan.go.id" },
+    update: {
       name: "Super Administrator BAPENDA",
-      email: "superadmin@bapenda.medan.go.id",
-      password: adminPw,
-      role: "ADMIN",
-      nik: "1271000000000010",
-      phone: "061-7365418",
+      password: adminPw, role: "ADMIN", nik: "1271000000000010", phone: "061-7365418",
       address: "Jl. Abdul Haris Nasution No.32, Medan, Sumatera Utara",
-      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&h=256&q=80",
-      isActive: true
+      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
+    },
+    create: {
+      id: "superadmin-id", name: "Super Administrator BAPENDA", email: "superadmin@bapenda.medan.go.id",
+      password: adminPw, role: "ADMIN", nik: "1271000000000010", phone: "061-7365418",
+      address: "Jl. Abdul Haris Nasution No.32, Medan, Sumatera Utara",
+      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
     }
   });
 
-  const adminAgha = await prisma.user.create({
-    data: {
-      id: "admin-agha-id",
+  const adminAgha = await prisma.user.upsert({
+    where: { email: "agha.novrian@bapenda.medan.go.id" },
+    update: {
       name: "Dr. M. Agha Novrian, S.STP, M.Si",
-      email: "agha.novrian@bapenda.medan.go.id",
-      password: adminPw,
-      role: "ADMIN",
-      nik: "1271000000000011",
-      phone: "081100000001",
+      password: adminPw, role: "ADMIN", nik: "1271000000000011", phone: "081100000001",
       address: "Badan Pendapatan Daerah Kota Medan (Kepala Bapenda Kota Medan)",
-      image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=256&h=256&q=80",
-      isActive: true
+      image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
+    },
+    create: {
+      id: "admin-agha-id", name: "Dr. M. Agha Novrian, S.STP, M.Si", email: "agha.novrian@bapenda.medan.go.id",
+      password: adminPw, role: "ADMIN", nik: "1271000000000011", phone: "081100000001",
+      address: "Badan Pendapatan Daerah Kota Medan (Kepala Bapenda Kota Medan)",
+      image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
     }
   });
 
-  const adminDewi = await prisma.user.create({
-    data: {
-      id: "admin-dewi-id",
-      name: "Dewi Sartika",
-      email: "dewi.sartika@bapenda.medan.go.id",
-      password: adminPw,
-      role: "ADMIN",
-      nik: "1271000000000012",
-      phone: "081100000002",
+  const adminDewi = await prisma.user.upsert({
+    where: { email: "dewi.sartika@bapenda.medan.go.id" },
+    update: {
+      name: "Dewi Sartika", password: adminPw, role: "ADMIN", nik: "1271000000000012", phone: "081100000002",
       address: "Badan Pendapatan Daerah Kota Medan (Kepala Bidang Pendataan dan Penetapan)",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=256&h=256&q=80",
-      isActive: true
+      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
+    },
+    create: {
+      id: "admin-dewi-id", name: "Dewi Sartika", email: "dewi.sartika@bapenda.medan.go.id",
+      password: adminPw, role: "ADMIN", nik: "1271000000000012", phone: "081100000002",
+      address: "Badan Pendapatan Daerah Kota Medan (Kepala Bidang Pendataan dan Penetapan)",
+      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
     }
   });
 
-  const adminRahmad = await prisma.user.create({
-    data: {
-      id: "admin-rahmad-id",
-      name: "Rahmad Syahputra",
-      email: "rahmad.syahputra@bapenda.medan.go.id",
-      password: adminPw,
-      role: "ADMIN",
-      nik: "1271000000000013",
-      phone: "081100000003",
+  const adminRahmad = await prisma.user.upsert({
+    where: { email: "rahmad.syahputra@bapenda.medan.go.id" },
+    update: {
+      name: "Rahmad Syahputra", password: adminPw, role: "ADMIN", nik: "1271000000000013", phone: "081100000003",
       address: "Badan Pendapatan Daerah Kota Medan (Kepala Bidang Penagihan dan Pengawasan)",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&h=256&q=80",
-      isActive: true
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
+    },
+    create: {
+      id: "admin-rahmad-id", name: "Rahmad Syahputra", email: "rahmad.syahputra@bapenda.medan.go.id",
+      password: adminPw, role: "ADMIN", nik: "1271000000000013", phone: "081100000003",
+      address: "Badan Pendapatan Daerah Kota Medan (Kepala Bidang Penagihan dan Pengawasan)",
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
     }
   });
 
-  const adminFitri = await prisma.user.create({
-    data: {
-      id: "admin-fitri-id",
-      name: "Fitri Handayani",
-      email: "fitri.handayani@bapenda.medan.go.id",
-      password: adminPw,
-      role: "ADMIN",
-      nik: "1271000000000014",
-      phone: "081100000004",
+  const adminFitri = await prisma.user.upsert({
+    where: { email: "fitri.handayani@bapenda.medan.go.id" },
+    update: {
+      name: "Fitri Handayani", password: adminPw, role: "ADMIN", nik: "1271000000000014", phone: "081100000004",
       address: "Badan Pendapatan Daerah Kota Medan (Kepala Bidang Teknologi Informasi)",
-      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=256&h=256&q=80",
-      isActive: true
+      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
+    },
+    create: {
+      id: "admin-fitri-id", name: "Fitri Handayani", email: "fitri.handayani@bapenda.medan.go.id",
+      password: adminPw, role: "ADMIN", nik: "1271000000000014", phone: "081100000004",
+      address: "Badan Pendapatan Daerah Kota Medan (Kepala Bidang Teknologi Informasi)",
+      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
     }
   });
 
-  const adminIndra = await prisma.user.create({
-    data: {
-      id: "admin-indra-id",
-      name: "Indra Gunawan",
-      email: "indra.gunawan@bapenda.medan.go.id",
-      password: adminPw,
-      role: "ADMIN",
-      nik: "1271000000000015",
-      phone: "081100000005",
+  const adminIndra = await prisma.user.upsert({
+    where: { email: "indra.gunawan@bapenda.medan.go.id" },
+    update: {
+      name: "Indra Gunawan", password: adminPw, role: "ADMIN", nik: "1271000000000015", phone: "081100000005",
       address: "Badan Pendapatan Daerah Kota Medan (Administrator Sistem)",
-      image: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=256&h=256&q=80",
-      isActive: true
+      image: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
+    },
+    create: {
+      id: "admin-indra-id", name: "Indra Gunawan", email: "indra.gunawan@bapenda.medan.go.id",
+      password: adminPw, role: "ADMIN", nik: "1271000000000015", phone: "081100000005",
+      address: "Badan Pendapatan Daerah Kota Medan (Administrator Sistem)",
+      image: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=256&h=256&q=80", isActive: true
     }
   });
 
   const admin = superAdmin;
   const admin2 = adminAgha;
-  const officer = await prisma.user.create({ data: { id: "officer-id", name: "Pratama Putra (Petugas)", email: "petugas@bapendamedan.go.id", password: officerPw, role: "OFFICER", nik: "1271000000000002", phone: "081234567001", address: "Jl. Kapten Maulana Lubis No. 2, Medan Petisah, Kota Medan", isActive: true } });
-  const officer2 = await prisma.user.create({ data: { id: "officer-id-2", name: "Dian Pertiwi (Petugas Lapangan)", email: "petugas2@bapendamedan.go.id", password: officerPw, role: "OFFICER", nik: "1271000000000004", phone: "081298765432", address: "Jl. Imam Bonjol No. 10, Medan Baru, Kota Medan", isActive: true } });
-  const officer3 = await prisma.user.create({ data: { id: "officer-id-3", name: "Reza Firmansyah (Petugas Verifikasi)", email: "petugas3@bapendamedan.go.id", password: officerPw, role: "OFFICER", nik: "1271000000000005", phone: "082112345678", address: "Jl. Diponegoro No. 15, Medan Baru, Kota Medan", isActive: true } });
-  await prisma.user.create({ data: { id: "dev-id", name: "Developer System", email: "dev@bapendamedan.go.id", password: devPw, role: "DEVELOPER", nik: "1271000000000006", phone: "08100000001", address: "Jl. Ring Road No. 99, Medan Sunggal", isActive: true } });
+  const officer = await prisma.user.upsert({ where: { email: "petugas@bapendamedan.go.id" }, update: { name: "Pratama Putra (Petugas)", password: officerPw, role: "OFFICER", nik: "1271000000000002", phone: "081234567001", address: "Jl. Kapten Maulana Lubis No. 2, Medan Petisah, Kota Medan", isActive: true }, create: { id: "officer-id", name: "Pratama Putra (Petugas)", email: "petugas@bapendamedan.go.id", password: officerPw, role: "OFFICER", nik: "1271000000000002", phone: "081234567001", address: "Jl. Kapten Maulana Lubis No. 2, Medan Petisah, Kota Medan", isActive: true } });
+  const officer2 = await prisma.user.upsert({ where: { email: "petugas2@bapendamedan.go.id" }, update: { name: "Dian Pertiwi (Petugas Lapangan)", password: officerPw, role: "OFFICER", nik: "1271000000000004", phone: "081298765432", address: "Jl. Imam Bonjol No. 10, Medan Baru, Kota Medan", isActive: true }, create: { id: "officer-id-2", name: "Dian Pertiwi (Petugas Lapangan)", email: "petugas2@bapendamedan.go.id", password: officerPw, role: "OFFICER", nik: "1271000000000004", phone: "081298765432", address: "Jl. Imam Bonjol No. 10, Medan Baru, Kota Medan", isActive: true } });
+  const officer3 = await prisma.user.upsert({ where: { email: "petugas3@bapendamedan.go.id" }, update: { name: "Reza Firmansyah (Petugas Verifikasi)", password: officerPw, role: "OFFICER", nik: "1271000000000005", phone: "082112345678", address: "Jl. Diponegoro No. 15, Medan Baru, Kota Medan", isActive: true }, create: { id: "officer-id-3", name: "Reza Firmansyah (Petugas Verifikasi)", email: "petugas3@bapendamedan.go.id", password: officerPw, role: "OFFICER", nik: "1271000000000005", phone: "082112345678", address: "Jl. Diponegoro No. 15, Medan Baru, Kota Medan", isActive: true } });
+  await prisma.user.upsert({ where: { email: "dev@bapendamedan.go.id" }, update: { name: "Developer System", password: devPw, role: "DEVELOPER", nik: "1271000000000006", phone: "08100000001", address: "Jl. Ring Road No. 99, Medan Sunggal", isActive: true }, create: { id: "dev-id", name: "Developer System", email: "dev@bapendamedan.go.id", password: devPw, role: "DEVELOPER", nik: "1271000000000006", phone: "08100000001", address: "Jl. Ring Road No. 99, Medan Sunggal", isActive: true } });
 
   const mahasiswaList: any[] = [];
   const mahasiswaData = [
@@ -214,7 +216,7 @@ async function main() {
   ];
   for (let i = 0; i < mahasiswaData.length; i++) {
     const m = mahasiswaData[i];
-    const u = await prisma.user.create({ data: { id: m.id, name: m.name, email: m.email, password: mhsPw, role: "MAHASISWA", nik: generateNIK(9000 + i), phone: `08987654${3000 + i}`, institution: m.university, address: `Jl. Universitas No. ${i + 1}, Medan Baru, Kota Medan`, isActive: true } });
+    const u = await prisma.user.upsert({ where: { email: m.email }, update: { name: m.name, password: mhsPw, role: "MAHASISWA", nik: generateNIK(9000 + i), phone: `08987654${3000 + i}`, institution: m.university, address: `Jl. Universitas No. ${i + 1}, Medan Baru, Kota Medan`, isActive: true }, create: { id: m.id, name: m.name, email: m.email, password: mhsPw, role: "MAHASISWA", nik: generateNIK(9000 + i), phone: `08987654${3000 + i}`, institution: m.university, address: `Jl. Universitas No. ${i + 1}, Medan Baru, Kota Medan`, isActive: true } });
     mahasiswaList.push(u);
   }
 
@@ -228,7 +230,8 @@ async function main() {
   for (let i = 0; i < 100; i++) {
     const dw = defaultWps[i];
     const district = pick(MEDAN_KECAMATAN);
-    const u = await prisma.user.create({ data: { id: dw?.id ?? `wp-user-${i}`, name: dw?.name ?? `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`, email: dw?.email ?? `wp${i + 1}@mail.com`, password: userPw, role: "USER", nik: dw?.nik ?? generateNIK(i), phone: `0812${rand(1000000, 9999999)}`, address: `${pick(STREETS)} No. ${rand(1, 150)}, Kel. ${pick(district.kelurahan)}, Kec. ${district.name}, Kota Medan`, isActive: i < 90 } });
+    const userEmail = dw?.email ?? `wp${i + 1}@mail.com`;
+    const u = await prisma.user.upsert({ where: { email: userEmail }, update: { name: dw?.name ?? `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`, password: userPw, role: "USER", nik: dw?.nik ?? generateNIK(i), phone: `0812${rand(1000000, 9999999)}`, address: `${pick(STREETS)} No. ${rand(1, 150)}, Kel. ${pick(district.kelurahan)}, Kec. ${district.name}, Kota Medan`, isActive: i < 90 }, create: { id: dw?.id ?? `wp-user-${i}`, name: dw?.name ?? `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`, email: userEmail, password: userPw, role: "USER", nik: dw?.nik ?? generateNIK(i), phone: `0812${rand(1000000, 9999999)}`, address: `${pick(STREETS)} No. ${rand(1, 150)}, Kel. ${pick(district.kelurahan)}, Kec. ${district.name}, Kota Medan`, isActive: i < 90 } });
     userIds.push(u.id);
   }
 
@@ -517,47 +520,47 @@ async function main() {
 
   console.log("🌱 Generating 100 Audit Logs...");
   const auditActions = [
-    { action: "CREATE_TAX_OBJECT", table: "TaxObject", rec: "obj-pbb-1" }, 
-    { action: "UPDATE_NJOP", table: "TaxObject", rec: "obj-pbb-2" }, 
+    { action: "CREATE_TAX_OBJECT", table: "TaxObject", rec: "obj-pbb-1" },
+    { action: "UPDATE_NJOP", table: "TaxObject", rec: "obj-pbb-2" },
     { action: "VERIFY_TAX_OBJECT", table: "TaxObject", rec: "obj-hotel-1" },
-    { action: "CREATE_PAYMENT", table: "Payment", rec: "pay-0" }, 
-    { action: "CONFIRM_PAYMENT", table: "Payment", rec: "pay-1" }, 
+    { action: "CREATE_PAYMENT", table: "Payment", rec: "pay-0" },
+    { action: "CONFIRM_PAYMENT", table: "Payment", rec: "pay-1" },
     { action: "APPROVE_KEBERATAN", table: "TaxSubmission", rec: "taxsub-1" },
-    { action: "REJECT_PPID_REQUEST", table: "PPIDRequest", rec: "ppid-1" }, 
-    { action: "APPROVE_RESEARCH", table: "ResearchRequest", rec: "research-1" }, 
+    { action: "REJECT_PPID_REQUEST", table: "PPIDRequest", rec: "ppid-1" },
+    { action: "APPROVE_RESEARCH", table: "ResearchRequest", rec: "research-1" },
     { action: "UPDATE_SYSTEM_SETTINGS", table: "SystemConfig", rec: "global-config" },
-    { action: "CREATE_USER", table: "User", rec: "wp-user-10" }, 
-    { action: "DEACTIVATE_USER", table: "User", rec: "wp-user-91" }, 
+    { action: "CREATE_USER", table: "User", rec: "wp-user-10" },
+    { action: "DEACTIVATE_USER", table: "User", rec: "wp-user-91" },
     { action: "EXPORT_TAX_DATA", table: "TaxObject", rec: "EXPORT-2026-06" },
-    { action: "UPDATE_ZNT", table: "LandValueZone", rec: "Z-PETISAH-1" }, 
-    { action: "CREATE_NEWS", table: "News", rec: "news-1" }, 
+    { action: "UPDATE_ZNT", table: "LandValueZone", rec: "Z-PETISAH-1" },
+    { action: "CREATE_NEWS", table: "News", rec: "news-1" },
     { action: "PUBLISH_ANNOUNCEMENT", table: "Announcement", rec: "ann-1" },
-    { action: "RESPOND_COMPLAINT", table: "Complaint", rec: "complaint-1" }, 
-    { action: "GENERATE_SPPT", table: "Sppt", rec: "SPPT-2026-BATCH" }, 
+    { action: "RESPOND_COMPLAINT", table: "Complaint", rec: "complaint-1" },
+    { action: "GENERATE_SPPT", table: "Sppt", rec: "SPPT-2026-BATCH" },
     { action: "UPDATE_PROPERTY_MARKET", table: "PropertyMarket", rec: "pm-batch-2026" },
-    { action: "RUN_TAX_ASSESSMENT", table: "TaxAssessment", rec: "assess-batch" }, 
-    { action: "RESET_USER_PASSWORD", table: "User", rec: "wp-user-5" }, 
+    { action: "RUN_TAX_ASSESSMENT", table: "TaxAssessment", rec: "assess-batch" },
+    { action: "RESET_USER_PASSWORD", table: "User", rec: "wp-user-5" },
     { action: "LOGIN_ADMIN", table: "Session", rec: "sess-admin-001" },
-    { action: "LOGIN_OFFICER", table: "Session", rec: "sess-officer-001" }, 
-    { action: "BULK_IMPORT_TAX_OBJECTS", table: "TaxObject", rec: "IMPORT-2026-Q1" }, 
+    { action: "LOGIN_OFFICER", table: "Session", rec: "sess-officer-001" },
+    { action: "BULK_IMPORT_TAX_OBJECTS", table: "TaxObject", rec: "IMPORT-2026-Q1" },
     { action: "DELETE_EXPIRED_PAYMENTS", table: "Payment", rec: "CLEANUP-2026" },
-    { action: "APPROVE_PPID_REQUEST", table: "PPIDRequest", rec: "ppid-3" }, 
-    { action: "UPDATE_USER_PROFILE", table: "User", rec: "wp-id-1" }, 
+    { action: "APPROVE_PPID_REQUEST", table: "PPIDRequest", rec: "ppid-3" },
+    { action: "UPDATE_USER_PROFILE", table: "User", rec: "wp-id-1" },
     { action: "GENERATE_LAPORAN_PAD", table: "Report", rec: "RPT-2026-Q2" },
-    { action: "RESOLVE_COMPLAINT", table: "Complaint", rec: "complaint-5" }, 
-    { action: "SYNC_BPN_DATA", table: "ObjectTaxLocation", rec: "SYNC-BPN-2026" }, 
+    { action: "RESOLVE_COMPLAINT", table: "Complaint", rec: "complaint-5" },
+    { action: "SYNC_BPN_DATA", table: "ObjectTaxLocation", rec: "SYNC-BPN-2026" },
     { action: "UPDATE_BUDGET_YEAR", table: "SystemConfig", rec: "global-config" },
   ];
-  
+
   const auditUsers = [
-    superAdmin.id, 
-    adminAgha.id, 
-    adminDewi.id, 
-    adminRahmad.id, 
-    adminFitri.id, 
-    adminIndra.id, 
-    officer.id, 
-    officer2.id, 
+    superAdmin.id,
+    adminAgha.id,
+    adminDewi.id,
+    adminRahmad.id,
+    adminFitri.id,
+    adminIndra.id,
+    officer.id,
+    officer2.id,
     officer3.id
   ];
 
