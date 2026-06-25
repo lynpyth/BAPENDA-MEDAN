@@ -68,15 +68,44 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    await prisma.user.delete({ where: { id } });
-
-    await AuditService.log({
-      userId: session.user.id,
-      action: "DELETE_USER",
-      table: "User",
-      recordId: id,
-      oldValue: oldUser,
+    // Check if user has relations to prevent database constraint errors and preserve financial history
+    const hasRelations = await prisma.user.findFirst({
+      where: {
+        id,
+        OR: [
+          { taxObjects: { some: {} } },
+          { payments: { some: {} } },
+          { sppts: { some: {} } },
+          { taxSubmissions: { some: {} } },
+        ]
+      }
     });
+
+    if (hasRelations) {
+      await prisma.user.update({
+        where: { id },
+        data: { isActive: false }
+      });
+
+      await AuditService.log({
+        userId: session.user.id,
+        action: "SOFT_DELETE_USER",
+        table: "User",
+        recordId: id,
+        oldValue: oldUser,
+        newValue: { ...oldUser, isActive: false },
+      });
+    } else {
+      await prisma.user.delete({ where: { id } });
+
+      await AuditService.log({
+        userId: session.user.id,
+        action: "DELETE_USER",
+        table: "User",
+        recordId: id,
+        oldValue: oldUser,
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

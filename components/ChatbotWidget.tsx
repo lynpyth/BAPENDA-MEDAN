@@ -144,7 +144,7 @@ export function ChatbotWidget() {
       <button
         onClick={toggleChat}
         className={cn(
-          "fixed bottom-6 right-6 z-[9999] w-14 h-14 rounded-full flex items-center justify-center shadow-xl cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95 group",
+          "fixed bottom-28 right-6 lg:bottom-6 z-[9999] w-14 h-14 rounded-full flex items-center justify-center shadow-xl cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95 group",
           isOpen 
             ? "bg-zinc-800 text-white hover:bg-zinc-700" 
             : "bg-primary text-white hover:shadow-2xl hover:shadow-primary/40 animate-pulse-subtle"
@@ -167,9 +167,9 @@ export function ChatbotWidget() {
       <div
         className={cn(
           "fixed z-[9998] transition-all duration-500 ease-out transform",
-          "bottom-24 right-4 left-4 md:left-auto md:right-6",
-          "w-[calc(100%-2rem)] md:w-[380px]",
-          "h-[70vh] md:h-[600px]",
+          "bottom-44 right-4 left-4 lg:bottom-24 lg:right-6 lg:left-auto",
+          "w-[calc(100%-2rem)] lg:w-[380px]",
+          "h-[60vh] lg:h-[600px]",
           "bg-white dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden",
           isOpen 
             ? "translate-y-0 opacity-100 pointer-events-auto scale-100" 

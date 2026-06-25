@@ -296,6 +296,7 @@ export const OfficerDashboard = ({ session }: { session: Session }) => {
                </div>
 
                <div className="relative h-[320px] w-full z-0 overflow-hidden">
+                  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
                   <MapContainer center={center} zoom={13} scrollWheelZoom={false} className="w-full h-full">
                      <TileLayer
                         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"

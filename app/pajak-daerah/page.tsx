@@ -3,7 +3,7 @@
 import PublicLayout from "@/components/PublicLayout";
 import { 
   Building2, Map, CreditCard, LayoutGrid, 
-  Car, Droplets, Tv, ArrowRight, Star, Zap
+  Car, Droplets, Tv, ArrowRight, Star, Zap, Bird
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -27,6 +27,7 @@ const taxTypes = [
   { id: "pbjt-hiburan", title: "PBJT Kesenian & Hiburan", icon: Tv, desc: "Pajak atas penyelenggaraan jasa kesenian, olahraga, dan hiburan komersial.", rate: "10% - 40%", period: "Bulanan", canSimulate: false },
   { id: "pbjt-listrik", title: "PBJT Tenaga Listrik", icon: Zap, desc: "Pajak atas konsumsi tenaga listrik baik yang dihasilkan sendiri maupun dari sumber lain.", rate: "3% - 10%", period: "Bulanan", canSimulate: false },
   { id: "pbjt-parkir", title: "PBJT Jasa Parkir", icon: Car, desc: "Pajak atas penyelenggaraan tempat parkir di luar badan jalan.", rate: "10%", period: "Bulanan", canSimulate: true },
+  { id: "p-walet", title: "Pajak Sarang Burung Walet", icon: Bird, desc: "Pajak atas kegiatan pengambilan dan/atau pengusahaan sarang burung walet.", rate: "10%", period: "Per Panen / Bulanan", canSimulate: true },
 ];
 
 export default function PajakDaerah() {

@@ -180,16 +180,18 @@ export async function DELETE(
       return NextResponse.json({ error: "Submission not found" }, { status: 404 });
     }
 
-    // Regular users can only delete their own PENDING submissions
+    // Authorize: Only admin/officer or the owner of the submission can delete
     if (session.user.role === "USER") {
       if (submission.userId !== session.user.id) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
-      if (submission.status !== "PENDING") {
-        return NextResponse.json({ error: "Pengajuan yang sedang diproses tidak dapat dihapus" }, { status: 400 });
-      }
-    } else if (!["ADMIN", "OFFICER"].includes(session.user.role)) {
+    } else if (!["ADMIN", "OFFICER", "DEVELOPER"].includes(session.user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Soft delete / prevention: do not allow deletion of processed submissions to maintain official logs
+    if (submission.status !== "PENDING") {
+      return NextResponse.json({ error: "Pengajuan yang sudah diproses tidak dapat dihapus secara permanen" }, { status: 400 });
     }
 
     await prisma.taxSubmission.delete({

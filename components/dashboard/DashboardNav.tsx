@@ -174,6 +174,7 @@ export const DashboardSidebar = () => {
         items: [
           { href: "/dashboard/pajak/objek", label: "Aset Pajak", icon: Landmark },
           { href: "/dashboard/pajak/sppt", label: "SPPT Saya", icon: FileBadge },
+          { href: "/dashboard/pajak/tagihan", label: "Pembayaran Pajak", icon: CreditCard },
           { href: "/dashboard/pajak/riwayat", label: "Riwayat Pembayaran", icon: Receipt }
         ]
       },

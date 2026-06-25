@@ -32,7 +32,6 @@ export default function SettingsPage() {
           setAddress(data.address ?? "");
         }
       } catch {
-        // fallback to session data
         setName(session?.user?.name ?? "");
       }
     };
@@ -88,222 +87,259 @@ export default function SettingsPage() {
   };
 
   const tabs = [
-    { id: "profile" as const, label: "Identitas", icon: User },
-    { id: "security" as const, label: "Privasi", icon: Lock },
+    { id: "profile" as const, label: "Profil & Identitas", icon: User },
+    { id: "security" as const, label: "Keamanan Akun", icon: Lock },
   ];
 
   return (
-    <div className="max-w-6xl space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-20 selection:bg-primary/20">
-      
+    <div className="max-w-5xl space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 selection:bg-primary/20 text-left">
+
       {/* ── Page Header ── */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 px-4 text-left">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 text-primary">
-             <div className="w-10 h-1 bg-primary rounded-full shadow-glow" />
-             <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">Account Central Control</p>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-black italic tracking-tighter text-foreground leading-none uppercase">
-            Manajemen <span className="text-primary italic">Profil.</span>
-          </h1>
-          <p className="text-muted-foreground font-medium text-xl max-w-2xl leading-relaxed italic border-l-4 border-primary/10 pl-8">
-            &quot;Pusat kendali untuk modifikasi identitas digital, keamanan akun, dan integritas data pengguna SIPADA.&quot;
-          </p>
+      <div className="space-y-3">
+        <div className="flex items-center gap-3 text-zinc-950 dark:text-zinc-300">
+          <div className="w-8 h-1 bg-zinc-950 dark:bg-zinc-300 rounded-full shadow-glow" />
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">Account Settings Portal</p>
         </div>
+        <h1 className="text-4xl md:text-6xl font-black italic tracking-tighter text-zinc-950 dark:text-white leading-none uppercase">
+          Pengaturan <span className="text-zinc-950 dark:text-zinc-100 italic">Akun Saya.</span>
+        </h1>
+        <p className="text-sm md:text-base text-muted-foreground font-medium max-w-2xl leading-relaxed italic border-l-4 border-zinc-950/20 dark:border-zinc-800 pl-6">
+          Kelola data pribadi Anda, sesuaikan keamanan kata sandi, serta pantau integritas kredensial Anda di platform Bapenda.Hub Kota Medan.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        
-        {/* ── Left Nav ── */}
-        <div className="lg:col-span-3 space-y-6">
-           <div className="bg-white border border-zinc-100 rounded-[3rem] p-3 shadow-xl shadow-primary/5 space-y-2">
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setActiveTab(t.id)}
-                  className={cn(
-                    "w-full flex items-center justify-between px-8 h-20 rounded-[2.5rem] font-black transition-all group relative overflow-hidden text-left",
-                    activeTab === t.id 
-                     ? "bg-primary text-white shadow-2xl scale-[1.02]" 
-                     : "text-zinc-500 hover:bg-zinc-50"
-                  )}
-                >
-                   <div className="flex items-center gap-5 relative z-10">
-                      <div className={cn("w-10 h-10 rounded-[1.2rem] flex items-center justify-center border transition-all", activeTab === t.id ? "bg-white/20 border-white/20" : "bg-zinc-50 border-zinc-100")}>
-                         <t.icon className="w-5 h-5" />
-                      </div>
-                      <span className="text-[10px] uppercase tracking-widest leading-none">{t.label}</span>
-                   </div>
-                   {activeTab === t.id && <CheckCircle className="w-4 h-4 opacity-50" />}
-                </button>
-              ))}
-           </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-           <Card padding="lg" variant="outline" className="border-border/50 bg-zinc-50/50 group rounded-[3rem] shadow-inner">
-              <div className="space-y-6 text-left">
-                 <p className="text-[9px] font-black uppercase text-zinc-400 tracking-[0.4em] italic leading-none">Security Insight</p>
-                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 border border-emerald-100">
-                       <ShieldCheck className="w-6 h-6" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase text-foreground italic leading-tight">Sistem <br />Terlindungi</span>
-                 </div>
-                 <p className="text-[10px] font-medium text-muted-foreground leading-relaxed italic opacity-60 ml-2 border-l-2 border-zinc-100 pl-4">Sesi Anda dienkripsi dengan protokol AES-GCM 256-bit standar perbankan.</p>
+        {/* ── Left Navigation / Sidebar ── */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white border border-zinc-200 rounded-2xl p-2 shadow-sm space-y-1">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={cn(
+                  "w-full flex items-center justify-between px-5 h-14 rounded-xl font-bold transition-all text-left",
+                  activeTab === t.id
+                    ? "bg-[#1E40AF] text-white shadow-md shadow-[#1E40AF]/15"
+                    : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                    activeTab === t.id ? "bg-white/20 text-white" : "bg-zinc-100 text-zinc-500"
+                  )}>
+                    <t.icon className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs uppercase tracking-wider">{t.label}</span>
+                </div>
+                {activeTab === t.id && <CheckCircle className="w-4 h-4 opacity-75" />}
+              </button>
+            ))}
+          </div>
+
+          <Card padding="md" className="border border-zinc-200 bg-zinc-50/50 rounded-2xl">
+            <div className="space-y-4">
+              <p className="text-[10px] font-black uppercase text-zinc-400 tracking-wider">Keamanan & Privasi</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 border border-emerald-100">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-zinc-800 uppercase tracking-tight">Sesi Terenkripsi</p>
+                  <p className="text-[10px] text-zinc-400 font-medium">Kredensial Anda aman dienkripsi</p>
+                </div>
               </div>
-           </Card>
+              <p className="text-[10px] text-zinc-500 italic leading-relaxed pl-1 border-l-2 border-zinc-200">
+                Semua data Anda terlindungi dengan standar enkripsi SSL 256-bit and autentikasi NextAuth.js terenkripsi penuh.
+              </p>
+            </div>
+          </Card>
         </div>
 
-        {/* ── Right Content ── */}
-        <div className="lg:col-span-9 animate-in fade-in slide-in-from-right-8 duration-1000">
-          {activeTab === "profile" && (
-            <Card padding="none" variant="elevated" className="relative group overflow-hidden border border-zinc-100 shadow-2xl shadow-primary/5 bg-white rounded-[5rem] min-h-[600px] text-left">
-               <div className="absolute top-0 right-0 p-32 opacity-5 -z-0">
-                  <User className="w-80 h-80 text-primary" />
-               </div>
-               
-               <form onSubmit={handleSave} className="relative z-10 p-12 lg:p-24 space-y-20">
-                  {/* Photo & Identity */}
-                  <div className="flex flex-col md:flex-row items-center gap-14">
-                      <div className="relative group/avatar">
-                        <div className="w-48 h-48 rounded-[4rem] bg-primary text-white flex items-center justify-center font-black text-7xl shadow-2xl transition-all duration-700 group-hover/avatar:rotate-3">
-                           {name?.[0]?.toUpperCase() ?? session?.user?.name?.[0] ?? "U"}
-                        </div>
-                        <button type="button" className="absolute -bottom-4 -right-4 w-16 h-16 bg-white text-primary rounded-2xl shadow-2xl hover:scale-110 active:scale-95 transition-all border-4 border-zinc-50 flex items-center justify-center">
-                           <Camera className="w-6 h-6" />
-                        </button>
-                      </div>
-                      <div className="space-y-4">
-                         <div className="flex items-center gap-3 px-6 py-2 bg-zinc-50 rounded-full border border-zinc-100 w-fit">
-                            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                            <p className="text-[10px] font-black uppercase tracking-widest text-primary italic leading-none">{(session?.user as { role?: string })?.role ?? "User"} Verification</p>
-                         </div>
-                         <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter text-foreground leading-none uppercase">{name || session?.user?.name}</h2>
-                         <p className="text-lg text-muted-foreground font-medium italic opacity-60">ID: BPN-MEDAN-{session?.user?.id?.slice(-6).toUpperCase() ?? "---"}</p>
-                      </div>
+        {/* ── Right Content Panel ── */}
+        <div className="lg:col-span-8">
+          {activeTab === "profile" ? (
+            <Card padding="md" className="relative overflow-hidden border border-zinc-200 shadow-sm bg-white rounded-2xl">
+              <div className="absolute top-0 right-0 p-8 opacity-5 -z-0">
+                <User className="w-32 h-32 text-primary" />
+              </div>
+
+              <form onSubmit={handleSave} className="relative z-10 space-y-6">
+                <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-zinc-100">
+                  <div className="relative group/avatar">
+                    <div className="w-24 h-24 rounded-2xl bg-[#1E40AF] text-white flex items-center justify-center font-bold text-4xl shadow-md">
+                      {name?.[0]?.toUpperCase() ?? session?.user?.name?.[0] ?? "W"}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toast("Unggah Foto", "Fitur unggah foto profil akan segera hadir.", "info")}
+                      className="absolute -bottom-2 -right-2 w-8 h-8 bg-white text-primary border border-zinc-200 rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
+                      title="Ubah Foto"
+                    >
+                      <Camera className="w-4 h-4 text-zinc-500" />
+                    </button>
+                  </div>
+                  <div className="text-center sm:text-left space-y-1">
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-600">Terverifikasi</p>
+                    </div>
+                    <h2 className="text-xl font-bold text-zinc-800 uppercase tracking-tight">{name || session?.user?.name}</h2>
+                    <p className="text-xs text-zinc-400 font-mono">BPN-M-{session?.user?.id?.slice(-8).toUpperCase() ?? "------"}</p>
+                  </div>
+                </div>
+
+                {/* Form Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 pl-1">Nama Lengkap</label>
+                    <div className="relative group">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[#1E40AF] transition-colors" />
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full pl-10 pr-4 h-12 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-bold text-sm text-zinc-700"
+                        required
+                      />
+                    </div>
                   </div>
 
-                  {/* Input Fields */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                     <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 pl-6 italic leading-none">Nama Lengkap</label>
-                        <div className="relative group">
-                           <User className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-colors" />
-                           <input 
-                               value={name}
-                               onChange={(e) => setName(e.target.value)}
-                               className="w-full pl-20 pr-10 h-20 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] outline-none focus:bg-white focus:border-primary/20 transition-all font-black text-lg tracking-tight shadow-inner"
-                           />
-                        </div>
-                     </div>
-                     <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 pl-6 italic leading-none">Alamat Email (Permanen)</label>
-                        <div className="relative opacity-60">
-                           <Mail className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300" />
-                           <input 
-                               readOnly
-                               value={session?.user?.email ?? ""}
-                               className="w-full pl-20 pr-10 h-20 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] text-zinc-400 cursor-not-allowed font-black italic"
-                           />
-                        </div>
-                     </div>
-                     <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 pl-6 italic leading-none">Nomor Handset</label>
-                        <div className="relative group">
-                           <Phone className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-colors" />
-                           <input 
-                               placeholder="08X-XXXX-XXXX"
-                               value={phone}
-                               onChange={(e) => setPhone(e.target.value)}
-                               className="w-full pl-20 pr-10 h-20 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] outline-none focus:bg-white focus:border-primary/20 transition-all font-black text-lg tracking-tight shadow-inner"
-                           />
-                        </div>
-                     </div>
-                     <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 pl-6 italic leading-none">Alamat Domisili</label>
-                        <div className="relative group">
-                           <MapPin className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-colors" />
-                           <input 
-                               placeholder="Jl. ..."
-                               value={address}
-                               onChange={(e) => setAddress(e.target.value)}
-                               className="w-full pl-20 pr-10 h-20 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] outline-none focus:bg-white focus:border-primary/20 transition-all font-black text-lg tracking-tight shadow-inner"
-                           />
-                        </div>
-                     </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 pl-1">Alamat Email (Akun)</label>
+                    <div className="relative opacity-70">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                      <input
+                        type="email"
+                        readOnly
+                        value={session?.user?.email ?? ""}
+                        className="w-full pl-10 pr-4 h-12 bg-zinc-50 border border-zinc-200 rounded-xl text-zinc-400 cursor-not-allowed font-medium text-sm italic"
+                      />
+                    </div>
                   </div>
 
-                  <div className="pt-10 flex border-t border-zinc-50">
-                     <Button type="submit" size="xl" disabled={loading} className="rounded-full px-16 h-20 btn-premium group font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/30">
-                        {loading ? "Menyimpan..." : "Simpan Perubahan Identitas"}
-                        <Save className="ml-4 w-5 h-5" />
-                     </Button>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 pl-1">Nomor Handphone</label>
+                    <div className="relative group">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[#1E40AF] transition-colors" />
+                      <input
+                        type="tel"
+                        placeholder="08xxxxxxxxxx"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full pl-10 pr-4 h-12 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-bold text-sm text-zinc-700"
+                      />
+                    </div>
                   </div>
-               </form>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 pl-1">Alamat Domisili</label>
+                    <div className="relative group">
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[#1E40AF] transition-colors" />
+                      <input
+                        type="text"
+                        placeholder="Masukkan alamat domisili..."
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="w-full pl-10 pr-4 h-12 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-bold text-sm text-zinc-700"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-zinc-100 flex justify-end">
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full sm:w-auto h-12 px-8 rounded-xl bg-primary text-white font-bold uppercase text-[10px] tracking-wider flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    {loading ? "Menyimpan..." : "Simpan Perubahan"}
+                    <Save className="w-4 h-4" />
+                  </Button>
+                </div>
+              </form>
             </Card>
-          )}
+          ) : (
+            <div className="space-y-6">
+              <Card padding="md" className="relative overflow-hidden border border-zinc-200 shadow-sm bg-white rounded-2xl">
+                <div className="absolute top-0 right-0 p-8 opacity-5 -z-0">
+                  <Fingerprint className="w-32 h-32 text-primary" />
+                </div>
 
-          {activeTab === "security" && (
-            <div className="space-y-10 text-left">
-               <Card padding="none" variant="elevated" className="space-y-16 shadow-2xl shadow-primary/5 border border-zinc-100 bg-white rounded-[5rem] p-12 lg:p-24 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-32 opacity-5 -z-0">
-                     <Fingerprint className="w-80 h-80 text-primary" />
+                <form onSubmit={handleChangePassword} className="relative z-10 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-zinc-800 uppercase tracking-tight">Perbarui Kata Sandi</h3>
+                    <p className="text-xs text-zinc-400 mt-1">Gunakan minimal 8 karakter dengan kombinasi angka dan huruf untuk kata sandi yang kuat.</p>
                   </div>
-                  
-                  <form onSubmit={handleChangePassword} className="space-y-10 relative z-10">
-                     <div className="space-y-4">
-                        <h3 className="text-3xl md:text-5xl font-black italic tracking-tighter uppercase leading-none">Ganti Kata Sandi <br /><span className="text-primary">Keamanan.</span></h3>
-                        <p className="text-lg text-muted-foreground font-medium italic border-l-4 border-primary/10 pl-10">&quot;Pastikan kata sandi Anda memiliki minimal 8 karakter untuk proteksi maksimal.&quot;</p>
-                     </div>
 
-                     <div className="grid grid-cols-1 gap-10 max-w-xl">
-                        <div className="space-y-4">
-                           <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 pl-6 italic">Password Saat Ini</label>
-                           <div className="relative group">
-                              <Lock className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-colors" />
-                              <input 
-                                 type="password"
-                                 value={currentPassword}
-                                 onChange={e => setCurrentPassword(e.target.value)}
-                                 className="w-full pl-20 pr-10 h-20 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] outline-none focus:bg-white focus:border-primary/20 transition-all text-lg font-black tracking-widest shadow-inner"
-                              />
-                           </div>
-                        </div>
-                        <div className="space-y-4">
-                           <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 pl-6 italic">Password Baru (min. 8 Karakter)</label>
-                           <div className="relative group">
-                              <Lock className="absolute left-8 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-300 group-focus-within:text-primary transition-colors" />
-                              <input 
-                                 type="password"
-                                 value={newPassword}
-                                 onChange={e => setNewPassword(e.target.value)}
-                                 className="w-full pl-20 pr-10 h-20 bg-zinc-50 border border-zinc-100 rounded-[2.5rem] outline-none focus:bg-white focus:border-primary/20 transition-all text-lg font-black tracking-widest shadow-inner"
-                              />
-                           </div>
-                        </div>
-                     </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 pl-1">Kata Sandi Saat Ini</label>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[#1E40AF] transition-colors" />
+                        <input
+                          type="password"
+                          placeholder="Masukkan password saat ini"
+                          value={currentPassword}
+                          onChange={e => setCurrentPassword(e.target.value)}
+                          className="w-full pl-10 pr-4 h-12 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-bold text-sm tracking-widest"
+                          required
+                        />
+                      </div>
+                    </div>
 
-                     <div className="pt-10 flex border-t border-zinc-50">
-                        <Button type="submit" variant="primary" size="xl" disabled={pwLoading} className="rounded-full px-16 h-20 btn-premium font-black uppercase text-xs tracking-widest shadow-2xl shadow-primary/30">
-                          {pwLoading ? "Memperbarui..." : "Mutakhirkan Kredensial"}
-                          <Settings className="ml-4 w-5 h-5" />
-                        </Button>
-                     </div>
-                  </form>
-               </Card>
-
-               <Card padding="none" variant="elevated" className="bg-white border border-zinc-100 rounded-[4rem] p-12 group hover:border-primary/20 transition-all shadow-xl shadow-primary/5">
-                  <div className="flex flex-col md:flex-row items-center gap-12">
-                     <div className="w-20 h-20 bg-zinc-50 rounded-[2rem] flex items-center justify-center border border-zinc-100 shadow-inner group-hover:rotate-6 transition-transform">
-                        <History className="w-10 h-10 text-primary" />
-                     </div>
-                     <div className="flex-1 space-y-3">
-                        <h4 className="text-2xl font-black italic tracking-tighter uppercase italic leading-none">Riwayat Sesi Aktif.</h4>
-                        <p className="text-muted-foreground font-medium text-sm leading-relaxed italic border-l-2 border-zinc-100 pl-6">
-                           &quot;Pantau log aktivitas login Anda di berbagai platform untuk mencegah akses tidak sah pada akun SIPADA Anda.&quot;
-                        </p>
-                     </div>
-                     <Button variant="outline" className="rounded-full px-10 h-16 font-black uppercase text-[10px] tracking-widest bg-zinc-50 border-zinc-100 hover:bg-white transition-all shadow-xl">Lihat Log Aktivitas</Button>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 pl-1">Kata Sandi Baru (min. 8 Karakter)</label>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[#1E40AF] transition-colors" />
+                        <input
+                          type="password"
+                          placeholder="Masukkan password baru"
+                          value={newPassword}
+                          onChange={e => setNewPassword(e.target.value)}
+                          className="w-full pl-10 pr-4 h-12 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-bold text-sm tracking-widest"
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
-               </Card>
+
+                  <div className="pt-4 border-t border-zinc-100 flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={pwLoading}
+                      className="w-full sm:w-auto h-12 px-8 rounded-xl bg-primary text-white font-bold uppercase text-[10px] tracking-wider flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      {pwLoading ? "Memperbarui..." : "Update Kata Sandi"}
+                      <Lock className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+
+              <Card padding="md" className="bg-white border border-zinc-200 rounded-2xl">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex gap-4">
+                    <div className="w-10 h-10 bg-zinc-50 rounded-xl flex items-center justify-center border border-zinc-200 shrink-0">
+                      <History className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="space-y-1 text-left">
+                      <p className="text-xs font-bold text-zinc-800 uppercase tracking-tight">Log Aktivitas Akun</p>
+                      <p className="text-[10px] text-zinc-400 max-w-md font-medium leading-relaxed">
+                        Pantau riwayat sesi masuk dan aktivitas akun Anda di platform SIPADA untuk memastikan tidak ada aktivitas mencurigakan.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => toast("Log Aktivitas", "Fitur log aktivitas rinci sedang dikembangkan.", "info")}
+                    className="w-full sm:w-auto h-10 px-5 rounded-lg border-zinc-200 text-zinc-600 text-[10px] font-bold uppercase tracking-wider hover:bg-zinc-50"
+                  >
+                    Lihat Log
+                  </Button>
+                </div>
+              </Card>
             </div>
           )}
         </div>
